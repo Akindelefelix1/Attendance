@@ -991,6 +991,14 @@ input {
   margin-top: 0.5rem;
 }
 
+.role-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .workdays-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -1024,6 +1032,10 @@ input {
   gap: 0.5rem;
 }
 
+.role-list.collapsed {
+  display: none;
+}
+
 .role-chip {
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -1033,6 +1045,20 @@ input {
   justify-content: space-between;
   gap: 0.5rem;
   background: #fffdf9;
+}
+
+.role-edit-input {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  flex: 1;
+  min-width: 160px;
+}
+
+.role-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .role-chip button {
@@ -1228,6 +1254,26 @@ input {
   color: var(--muted);
 }
 
+.cta-card {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: #fffaf3;
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cta-card.cta-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .cta-card.cta-top {
+    grid-template-columns: 1fr;
+  }
+}
+
 .muted {
   color: var(--muted);
   font-size: 0.9rem;
@@ -1253,6 +1299,10 @@ input {
   box-shadow: 0 20px 60px rgba(26, 26, 26, 0.25);
   display: grid;
   gap: 0.75rem;
+}
+
+.modal.modal-wide {
+  width: min(520px, 100%);
 }
 
 .modal-actions {

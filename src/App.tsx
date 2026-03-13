@@ -66,6 +66,7 @@ const App = () => {
     null
   );
   const [navCompact, setNavCompact] = useState(false);
+  const [showOnboardModal, setShowOnboardModal] = useState(false);
 
   const todayISO = getTodayISO();
   const [selectedDateISO, setSelectedDateISO] = useState(todayISO);
@@ -289,6 +290,9 @@ const App = () => {
     setShowAdminGate(false);
     setAdminEmailInput("");
   };
+
+  const handleOpenOnboard = () => setShowOnboardModal(true);
+  const handleCloseOnboard = () => setShowOnboardModal(false);
 
   const handleBackToLanding = () => {
     localStorage.removeItem(LANDING_KEY);
@@ -514,6 +518,23 @@ const App = () => {
               <AdminDashboard organizations={visibleOrganizations} />
               <div className="admin-layout">
                 <section className="panel admin-column">
+                  <div className="cta-card cta-top">
+                    <div>
+                      <h3>Onboard staff</h3>
+                      <p className="muted">
+                        Add new team members and assign roles in seconds.
+                      </p>
+                    </div>
+                    <button
+                      className="btn solid"
+                      type="button"
+                      onClick={handleOpenOnboard}
+                      disabled={!selectedOrg || isBusy}
+                    >
+                      Onboard staff
+                    </button>
+                  </div>
+
                   <OrgSelector
                     organizations={visibleOrganizations}
                     selectedOrgId={selectedOrgId}
@@ -645,12 +666,6 @@ const App = () => {
                     />
                   ) : null}
 
-                  <StaffOnboarding
-                    onAddStaff={handleAddStaff}
-                    roles={selectedOrg?.settings.roles ?? []}
-                    disabled={!selectedOrg}
-                    isLoading={busyAction?.id === "add-staff"}
-                  />
                 </section>
 
                 <section className="panel wide admin-column">
@@ -802,6 +817,27 @@ const App = () => {
             <div className="modal-actions">
               <button className="btn ghost" type="button" onClick={handleCloseAdminGate}>
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showOnboardModal ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal modal-wide" role="dialog" aria-modal="true">
+            <div className="modal-header">
+              <h3>Onboard staff</h3>
+            </div>
+            <StaffOnboarding
+              onAddStaff={handleAddStaff}
+              roles={selectedOrg?.settings.roles ?? []}
+              disabled={!selectedOrg}
+              isLoading={busyAction?.id === "add-staff"}
+            />
+            <div className="modal-actions">
+              <button className="btn ghost" type="button" onClick={handleCloseOnboard}>
+                Close
               </button>
             </div>
           </div>

@@ -15,6 +15,9 @@ const AdminSettings = ({
   isBusy = false
 }: Props) => {
   const [roleInput, setRoleInput] = useState("");
+  const [rolesOpen, setRolesOpen] = useState(true);
+  const [editingRole, setEditingRole] = useState<string | null>(null);
+  const [roleDrafts, setRoleDrafts] = useState<Record<string, string>>({});
   const workingDays = settings.workingDays ?? [1, 2, 3, 4, 5];
 
   const toggleWorkingDay = (day: number) => {
@@ -40,6 +43,25 @@ const AdminSettings = ({
       ...settings,
       roles: settings.roles.filter((role) => role !== roleToRemove)
     });
+  };
+
+  const handleEditRole = (roleToEdit: string) => {
+    setEditingRole(roleToEdit);
+    setRoleDrafts((prev) => ({ ...prev, [roleToEdit]: roleToEdit }));
+  };
+
+  const handleSaveRole = (roleToSave: string) => {
+    const nextName = (roleDrafts[roleToSave] ?? "").trim();
+    if (!nextName) return;
+    const duplicate = settings.roles.some(
+      (role) => role.toLowerCase() === nextName.toLowerCase() && role !== roleToSave
+    );
+    if (duplicate) return;
+    const nextRoles = settings.roles.map((role) =>
+      role === roleToSave ? nextName : role
+    );
+    onUpdate({ ...settings, roles: nextRoles });
+    setEditingRole(null);
   };
 
   return (
@@ -114,9 +136,18 @@ const AdminSettings = ({
       </div>
 
       <div className="role-settings">
-        <div className="panel-header">
-          <h3>Roles</h3>
-          <p className="muted">Create organization roles used during onboarding.</p>
+        <div className="role-header">
+          <div className="panel-header">
+            <h3>Roles</h3>
+            <p className="muted">Create organization roles used during onboarding.</p>
+          </div>
+          <button
+            className="btn ghost"
+            type="button"
+            onClick={() => setRolesOpen((prev) => !prev)}
+          >
+            {rolesOpen ? "Hide roles" : `Show roles (${settings.roles.length})`}
+          </button>
         </div>
         <div className="role-input">
           <input
@@ -135,17 +166,61 @@ const AdminSettings = ({
             {isBusy ? "Saving..." : "Add role"}
           </button>
         </div>
-        <div className="role-list">
+        <div className={`role-list ${rolesOpen ? "" : "collapsed"}`}>
           {settings.roles.map((role) => (
             <div className="role-chip" key={role}>
-              <span>{role}</span>
-              <button
-                type="button"
-                onClick={() => handleRemoveRole(role)}
-                disabled={disabled || isBusy}
-              >
-                Remove
-              </button>
+              {editingRole === role ? (
+                <>
+                  <input
+                    className="role-edit-input"
+                    type="text"
+                    value={roleDrafts[role] ?? ""}
+                    onChange={(event) =>
+                      setRoleDrafts((prev) => ({
+                        ...prev,
+                        [role]: event.target.value
+                      }))
+                    }
+                    disabled={disabled || isBusy}
+                  />
+                  <div className="role-actions">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveRole(role)}
+                      disabled={disabled || isBusy}
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingRole(null)}
+                      disabled={disabled || isBusy}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span>{role}</span>
+                  <div className="role-actions">
+                    <button
+                      type="button"
+                      onClick={() => handleEditRole(role)}
+                      disabled={disabled || isBusy}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveRole(role)}
+                      disabled={disabled || isBusy}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
           {settings.roles.length === 0 ? (
