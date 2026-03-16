@@ -69,6 +69,7 @@ const App = () => {
   );
   const [navCompact, setNavCompact] = useState(false);
   const [showOnboardModal, setShowOnboardModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const todayISO = getTodayISO();
   const [selectedDateISO, setSelectedDateISO] = useState(todayISO);
@@ -320,6 +321,13 @@ const App = () => {
     navigate("/");
   };
 
+  const handleRequestLogout = () => setShowLogoutConfirm(true);
+  const handleCancelLogout = () => setShowLogoutConfirm(false);
+  const handleConfirmLogout = () => {
+    setShowLogoutConfirm(false);
+    handleBackToLanding();
+  };
+
   const handleAddOrgFromPage = (name: string, location: string) => {
     if (sessionOrgId) return;
     if (orgLimitReached) return;
@@ -404,36 +412,23 @@ const App = () => {
           </span>
         </div>
         <div className="topbar-actions nav-links">
-          <button
-            className={`nav-pill ${isDashboardPage ? "active" : ""}`}
-            type="button"
-            onClick={() => navigate("/app")}
-          >
-            <span className="nav-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="presentation">
-                <path
-                  d="M3 10.5L12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-5.5v-6h-4v6h-5.5A1.5 1.5 0 0 1 3 19.5v-9Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-            Dashboard
-          </button>
-          <button className="nav-pill" type="button" onClick={handleBackToLanding}>
-            <span className="nav-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="presentation">
-                <path
-                  d="M5 12h14m-8-6 6 6-6 6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            Back to landing
-          </button>
+          {isDashboardPage ? null : (
+            <button
+              className="nav-pill"
+              type="button"
+              onClick={() => navigate("/app")}
+            >
+              <span className="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path
+                    d="M3 10.5L12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-5.5v-6h-4v6h-5.5A1.5 1.5 0 0 1 3 19.5v-9Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+              Dashboard
+            </button>
+          )}
           {effectiveViewMode === "admin" ? (
             <button className="nav-pill" type="button" onClick={handleSwitchToStaff}>
               <span className="nav-icon" aria-hidden="true">
@@ -466,7 +461,7 @@ const App = () => {
               Switch to admin
             </button>
           )}
-          {isAdmin ? (
+          {effectiveViewMode === "admin" ? (
             <button
               className={`nav-pill ${isOrganizationsPage ? "active" : ""}`}
               type="button"
@@ -485,7 +480,7 @@ const App = () => {
               {isOrganizationsPage ? "Back to dashboard" : "Organizations"}
             </button>
           ) : null}
-          {isAdmin ? (
+          {effectiveViewMode === "admin" ? (
             <button
               className={`nav-pill ${isAnalyticsPage ? "active" : ""}`}
               type="button"
@@ -505,7 +500,7 @@ const App = () => {
               {isAnalyticsPage ? "Back to dashboard" : "Analytics"}
             </button>
           ) : null}
-          {isAdmin ? (
+          {effectiveViewMode === "admin" ? (
             <button
               className={`nav-pill ${isSettingsPage ? "active" : ""}`}
               type="button"
@@ -525,7 +520,7 @@ const App = () => {
         </div>
       </div>
 
-          {isOrganizationsPage && isAdmin ? (
+      {isOrganizationsPage && effectiveViewMode === "admin" ? (
         <main className="layout full">
           <OrganizationsPage
             organizations={visibleOrganizations}
@@ -538,7 +533,7 @@ const App = () => {
             busyActionId={busyAction?.id ?? null}
           />
         </main>
-      ) : isAnalyticsPage && isAdmin ? (
+      ) : isAnalyticsPage && effectiveViewMode === "admin" ? (
         <main className="layout full">
           <AnalyticsPage
             organization={selectedOrg}
@@ -547,7 +542,7 @@ const App = () => {
             }
           />
         </main>
-      ) : isSettingsPage && isAdmin ? (
+      ) : isSettingsPage && effectiveViewMode === "admin" ? (
         <main className="layout full">
           <div className="panel settings-header">
             <div>
@@ -555,6 +550,15 @@ const App = () => {
               <p className="muted">
                 Edit organization details, attendance rules, working days, and roles.
               </p>
+            </div>
+            <div className="settings-actions">
+              <button
+                className="btn ghost danger"
+                type="button"
+                onClick={handleRequestLogout}
+              >
+                Log out
+              </button>
             </div>
           </div>
           <div className="admin-layout">
@@ -944,6 +948,15 @@ const App = () => {
         loadingLabel={busyAction?.label ?? "Working..."}
         onConfirm={handleConfirmAction}
         onCancel={() => setPendingAction(null)}
+      />
+
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Log out"
+        description="Are you sure you want to log out and return to the landing page?"
+        confirmLabel="Log out"
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
       />
 
       {showAdminGate ? (

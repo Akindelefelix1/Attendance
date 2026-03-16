@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addOrganization, loadState, saveState } from "../lib/storage";
 import type { Organization } from "../types";
@@ -38,7 +38,11 @@ const LandingPage = ({ onEnter, page }: Props) => {
   const [signupPassword, setSignupPassword] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [authError, setAuthError] = useState("");
+const [authError, setAuthError] = useState("");
+  const heroImages = [
+    "https://res.cloudinary.com/doxxevnyt/image/upload/v1773662233/8b9bce25-da3f-4c63-a9c4-6c543a15e1f1_yteu7o.png"
+  ];
+  const [heroIndex, setHeroIndex] = useState(0);
 
   const handleSignup = () => {
     setAuthError("");
@@ -98,7 +102,15 @@ const LandingPage = ({ onEnter, page }: Props) => {
     if (page === "login") return "Welcome back";
     if (page === "signup") return "Create organization";
     return "";
-  }, [page]);
+}, [page]);
+
+  useEffect(() => {
+    if (page !== "home" || heroImages.length <= 1) return;
+    const interval = window.setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroImages.length);
+    }, 3000);
+    return () => window.clearInterval(interval);
+  }, [page, heroImages.length]);
 
   return (
     <div className="landing">
@@ -230,25 +242,51 @@ const LandingPage = ({ onEnter, page }: Props) => {
       {page === "home" ? (
         <>
           <header className="landing-hero">
-            <div className="landing-hero-copy">
-              <p className="landing-eyebrow">Attendance made simple</p>
-              <h1>Run reliable staff attendance across every organization.</h1>
-              <p className="landing-lede">
-                Morning sign-ins, evening sign-outs, late flags, and historical tracking
-                built for teams that want clarity without complexity.
-              </p>
-              <div className="landing-hero-badges">
-                <span className="badge">Live dashboards</span>
-                <span className="badge">Role-based access</span>
-                <span className="badge">Late alerts</span>
+            <div className="landing-hero-panel">
+              <div className="landing-hero-copy">
+                <p className="landing-eyebrow">Attendance made simple</p>
+                <h1>Run reliable staff attendance across every organization.</h1>
+                <p className="landing-lede">
+                  Morning sign-ins, evening sign-outs, late flags, and historical tracking
+                  built for teams that want clarity without complexity.
+                </p>
+                <div className="landing-hero-badges">
+                  <span className="badge">Live dashboards</span>
+                  <span className="badge">Role-based access</span>
+                  <span className="badge">Late alerts</span>
+                </div>
+                <div className="landing-cta">
+                  <button className="btn solid" type="button" onClick={onEnter}>
+                    Enter the app
+                  </button>
+                  <button className="btn ghost" type="button">
+                    Book a demo
+                  </button>
+                </div>
               </div>
-              <div className="landing-cta">
-                <button className="btn solid" type="button" onClick={onEnter}>
-                  Enter the app
-                </button>
-                <button className="btn ghost" type="button">
-                  Book a demo
-                </button>
+              <div className="landing-hero-visual">
+                <div className="hero-image-frame">
+                  <div className="hero-phone primary" aria-hidden="true">
+                    {heroImages.map((src, idx) => (
+                      <img
+                        key={src}
+                        src={src}
+                        alt="Attendance dashboard preview"
+                        className={`hero-phone-layer ${idx === heroIndex ? "active" : ""}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              {heroImages.length > 1 ? (
+                <div className="hero-dots" aria-hidden="true">
+                  {heroImages.map((_, idx) => (
+                    <span
+                      key={idx}
+                      className={`hero-dot ${idx === heroIndex ? "active" : ""}`}
+                    />
+                  ))}
+                </div>
+              ) : null}
               </div>
             </div>
             <div className="landing-hero-card">
@@ -463,7 +501,7 @@ const LandingPage = ({ onEnter, page }: Props) => {
       ) : null}
 
       {page === "about" ? (
-        <section className="info-page">
+        <section className="info-page about-page">
           <div className="info-hero">
             <div>
               <p className="landing-eyebrow">About Attendance</p>
@@ -505,7 +543,7 @@ const LandingPage = ({ onEnter, page }: Props) => {
       ) : null}
 
       {page === "contact" ? (
-        <section className="info-page">
+        <section className="info-page contact-page">
           <div className="info-hero">
             <div>
               <p className="landing-eyebrow">Contact us</p>
@@ -595,13 +633,13 @@ const LandingPage = ({ onEnter, page }: Props) => {
             <div>
               <p className="landing-eyebrow">Plans</p>
               <h1>Choose the right plan for your organization.</h1>
+              <div className="info-hero-card inline">
+                <h3>Need a custom plan?</h3>
+                <p className="muted">We can tailor a package for large teams.</p>
+              </div>
               <p className="landing-lede">
                 Start free, then unlock advanced analytics and integrations.
               </p>
-            </div>
-            <div className="info-hero-card">
-              <h3>Need a custom plan?</h3>
-              <p className="muted">We can tailor a package for large teams.</p>
             </div>
           </div>
           <div className="plans">
@@ -770,3 +808,7 @@ const LandingPage = ({ onEnter, page }: Props) => {
 };
 
 export default LandingPage;
+
+
+
+

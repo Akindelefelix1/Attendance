@@ -69,7 +69,7 @@ select {
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.75rem;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid var(--border);
@@ -148,6 +148,15 @@ select {
   gap: 0.85rem;
 }
 
+.auth-form label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.auth-form input {
+  width: 100%;
+}
+
 .auth-error {
   background: #ffe9e3;
   border: 1px solid #f9b9a7;
@@ -160,10 +169,106 @@ select {
 .landing-hero {
   display: grid;
   gap: 2.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
   align-items: center;
   margin-bottom: 3rem;
   position: relative;
+  width: 100%;
+  padding: 0;
+}
+
+.landing-hero-panel {
+  background: #f6f6f6;
+  border-radius: 28px;
+  border: 1px solid #e8e8e8;
+  padding: 3rem;
+  box-shadow: 0 24px 60px rgba(26, 26, 26, 0.08);
+  display: grid;
+  gap: 2.5rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: center;
+}
+
+.landing-hero-visual {
+  display: grid;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.hero-image-frame {
+  border-radius: 26px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  position: relative;
+  min-height: 360px;
+  overflow: hidden;
+}
+
+.hero-phone {
+  position: absolute;
+  bottom: -2%;
+  right: 4%;
+  width: 84%;
+  height: 100%;
+  border-radius: 26px;
+  object-fit: cover;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+  background: #ffffff;
+}
+
+.hero-phone.primary {
+  transform: rotate(-2deg);
+  z-index: 2;
+}
+
+.hero-phone-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 26px;
+  display: block;
+  object-fit: contain;
+  background: #ffffff;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+
+.hero-phone-layer.active {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .landing-hero-panel {
+    grid-template-columns: 1fr;
+    padding: 2.25rem;
+  }
+
+  .hero-image-frame {
+    min-height: 300px;
+  }
+
+  .hero-phone.primary {
+    width: 70%;
+  }
+}
+
+.hero-dots {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.hero-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #e0d5c7;
+}
+
+.hero-dot.active {
+  background: var(--accent);
 }
 
 .landing-eyebrow {
@@ -300,11 +405,24 @@ select {
   margin-bottom: 2rem;
 }
 
+.contact-page .info-hero {
+  grid-template-columns: 1fr;
+  align-items: flex-start;
+}
+
 .info-hero-card {
   border-radius: 20px;
   border: 1px solid var(--border);
   background: #fffaf3;
   padding: 1.5rem;
+}
+
+.info-hero-card.inline {
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .info-grid {
@@ -318,6 +436,29 @@ select {
   border: 1px solid var(--border);
   background: var(--panel);
   padding: 1.25rem;
+}
+
+.about-page .info-hero {
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.about-page .info-hero-card {
+  padding: 2rem;
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(26, 26, 26, 0.08);
+}
+
+.about-page .info-grid {
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.about-page .info-card {
+  padding: 2rem;
+  border-radius: 22px;
+  box-shadow: 0 16px 35px rgba(26, 26, 26, 0.08);
 }
 
 .contact-grid {
@@ -360,11 +501,18 @@ select {
   padding: 1.75rem;
   display: grid;
   gap: 0.85rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .plan-card.highlight {
   border-color: #ffd3bf;
   box-shadow: 0 18px 40px rgba(255, 107, 53, 0.2);
+}
+
+.plan-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 22px 45px rgba(26, 26, 26, 0.18);
+  border-color: #f3c9b4;
 }
 
 .plan-price {
@@ -860,6 +1008,16 @@ input {
 
 .settings-header {
   margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 0.75rem;
 }
 
 .dashboard-grid {
@@ -1276,16 +1434,22 @@ input {
 
 .cta-rect {
   border-radius: 12px;
-  padding: 0.1rem 0.5rem;
+  padding: 0.55rem 1.25rem;
   min-height: 0;
   width: 100%;
   justify-content: center;
-  line-height: 1.1;
+  line-height: 1.2;
   font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+.cta-rect:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(26, 26, 26, 0.18);
 }
 
 .attendance-view {
