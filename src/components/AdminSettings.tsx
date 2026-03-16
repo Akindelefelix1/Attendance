@@ -4,6 +4,7 @@ import type { OrgSettings } from "../types";
 type Props = {
   settings: OrgSettings;
   onUpdate: (next: OrgSettings) => void;
+  primaryAdminEmail: string;
   disabled?: boolean;
   isBusy?: boolean;
 };
@@ -11,6 +12,7 @@ type Props = {
 const AdminSettings = ({
   settings,
   onUpdate,
+  primaryAdminEmail,
   disabled = false,
   isBusy = false
 }: Props) => {
@@ -18,7 +20,18 @@ const AdminSettings = ({
   const [rolesOpen, setRolesOpen] = useState(true);
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const [roleDrafts, setRoleDrafts] = useState<Record<string, string>>({});
+  const [adminInput, setAdminInput] = useState("");
   const workingDays = settings.workingDays ?? [1, 2, 3, 4, 5];
+  const adminLimit =
+    settings.planTier === "pro" ? 10 : settings.planTier === "plus" ? 3 : 1;
+  const normalizedPrimary = primaryAdminEmail.trim().toLowerCase();
+  const adminEmails = settings.adminEmails ?? [];
+  const totalAdmins = new Set(
+    [normalizedPrimary, ...adminEmails.map((email) => email.toLowerCase())].filter(
+      Boolean
+    )
+  ).size;
+  const remainingAdmins = Math.max(adminLimit - totalAdmins, 0);
 
   const toggleWorkingDay = (day: number) => {
     const next = workingDays.includes(day)
@@ -64,8 +77,113 @@ const AdminSettings = ({
     setEditingRole(null);
   };
 
+  const handleAddAdmin = () => {
+    const trimmed = adminInput.trim().toLowerCase();
+    if (!trimmed) return;
+    if (trimmed === normalizedPrimary) {
+      setAdminInput("");
+      return;
+    }
+    if (adminEmails.some((email) => email.toLowerCase() === trimmed)) {
+      setAdminInput("");
+      return;
+    }
+    if (remainingAdmins <= 0) return;
+    onUpdate({ ...settings, adminEmails: [...adminEmails, trimmed] });
+    setAdminInput("");
+  };
+
+  const handleRemoveAdmin = (emailToRemove: string) => {
+    onUpdate({
+      ...settings,
+      adminEmails: adminEmails.filter((email) => email !== emailToRemove)
+    });
+  };
+
   return (
     <section className="admin-settings">
+      <div className="role-settings">
+        <div className="panel-header">
+          <h3>Plan tier</h3>
+          <p className="muted">Controls admin limits and advanced capabilities.</p>
+        </div>
+        <label>
+          Current plan
+          <select
+            value={settings.planTier}
+            onChange={(event) => {
+              const nextPlan = event.target.value as OrgSettings["planTier"];
+              const nextLimit = nextPlan === "pro" ? 10 : nextPlan === "plus" ? 3 : 1;
+              const allowedExtras = Math.max(nextLimit - 1, 0);
+              onUpdate({
+                ...settings,
+                planTier: nextPlan,
+                adminEmails: adminEmails.slice(0, allowedExtras)
+              });
+            }}
+            disabled={disabled || isBusy}
+          >
+            <option value="free">Free</option>
+            <option value="plus">Plus</option>
+            <option value="pro">Pro</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="role-settings">
+        <div className="panel-header">
+          <h3>Admins</h3>
+          <p className="muted">
+            {totalAdmins} of {adminLimit} admin slots used.
+          </p>
+        </div>
+        <label>
+          Add admin email
+          <div className="role-input">
+            <input
+              type="email"
+              value={adminInput}
+              onChange={(event) => setAdminInput(event.target.value)}
+              placeholder="admin@company.com"
+              disabled={disabled || isBusy || remainingAdmins <= 0}
+            />
+            <button
+              className="btn solid"
+              type="button"
+              onClick={handleAddAdmin}
+              disabled={disabled || isBusy || remainingAdmins <= 0}
+            >
+              {remainingAdmins <= 0 ? "Limit reached" : "Add admin"}
+            </button>
+          </div>
+        </label>
+        <div className="role-list">
+          <div className="role-chip">
+            <span>{primaryAdminEmail}</span>
+            <div className="role-actions">
+              <span className="muted">Primary admin</span>
+            </div>
+          </div>
+          {adminEmails.map((email) => (
+            <div className="role-chip" key={email}>
+              <span>{email}</span>
+              <div className="role-actions">
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAdmin(email)}
+                  disabled={disabled || isBusy}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
+          {adminEmails.length === 0 ? (
+            <p className="muted">No additional admins yet.</p>
+          ) : null}
+        </div>
+      </div>
+
       <div className="panel-header">
         <h3>Attendance rules</h3>
         <p className="muted">Late and early checkout thresholds are set here.</p>
@@ -92,6 +210,39 @@ const AdminSettings = ({
           disabled={disabled || isBusy}
         />
       </label>
+
+      <div className="role-settings">
+        <div className="panel-header">
+          <h3>Sign-in permissions</h3>
+          <p className="muted">
+            Control whether staff can sign in/out for others or only themselves.
+          </p>
+        </div>
+        <label className="toggle-pill">
+          <input
+            type="radio"
+            name="attendance-policy"
+            checked={settings.attendanceEditPolicy === "any"}
+            onChange={() =>
+              onUpdate({ ...settings, attendanceEditPolicy: "any" })
+            }
+            disabled={disabled || isBusy}
+          />
+          <span>Anyone can sign in/out for others</span>
+        </label>
+        <label className="toggle-pill">
+          <input
+            type="radio"
+            name="attendance-policy"
+            checked={settings.attendanceEditPolicy === "self-only"}
+            onChange={() =>
+              onUpdate({ ...settings, attendanceEditPolicy: "self-only" })
+            }
+            disabled={disabled || isBusy}
+          />
+          <span>Only the logged-in email can sign in/out for itself</span>
+        </label>
+      </div>
 
       <div className="role-settings">
         <div className="panel-header">

@@ -17,6 +17,7 @@ type Props = {
   onSignIn: (staffId: string) => void;
   onSignOut: (staffId: string) => void;
   canEdit: boolean;
+  canEditStaff?: (staff: StaffMember) => boolean;
   isBusy?: boolean;
 };
 
@@ -27,6 +28,7 @@ const AttendanceTable = ({
   onSignIn,
   onSignOut,
   canEdit,
+  canEditStaff,
   isBusy = false
 }: Props) => {
   if (staff.length === 0) {
@@ -55,6 +57,7 @@ const AttendanceTable = ({
           const status = getStatus(record);
           const isSignedIn = status === "Signed in";
           const isSignedOut = status === "Signed out";
+          const canEditRow = canEdit && (canEditStaff ? canEditStaff(person) : true);
           const isLate = isLateCheckIn(
             record?.signInAt,
             settings.lateAfterTime,
@@ -103,8 +106,8 @@ const AttendanceTable = ({
                   {!isSignedIn && !isSignedOut ? (
                     <button
                       className="btn ghost"
-                      onClick={() => onSignIn(person.id)}
-                      disabled={!canEdit || isBusy}
+                      onClick={() => (canEditRow ? onSignIn(person.id) : null)}
+                      disabled={!canEditRow || isBusy}
                     >
                       Sign in
                     </button>
@@ -112,8 +115,8 @@ const AttendanceTable = ({
                   {isSignedIn && !isSignedOut ? (
                     <button
                       className="btn solid"
-                      onClick={() => onSignOut(person.id)}
-                      disabled={!canEdit || isBusy}
+                      onClick={() => (canEditRow ? onSignOut(person.id) : null)}
+                      disabled={!canEditRow || isBusy}
                     >
                       Sign out
                     </button>

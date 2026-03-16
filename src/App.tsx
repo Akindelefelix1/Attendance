@@ -47,6 +47,7 @@ const App = () => {
   const location = useLocation();
   const isOrganizationsPage = location.pathname === "/app/organizations";
   const isAnalyticsPage = location.pathname === "/app/analytics";
+  const isSettingsPage = location.pathname === "/app/settings";
   const isDashboardPage = location.pathname === "/app";
   const [state, setState] = useState(loadState());
   const sessionOrgId = localStorage.getItem(SESSION_KEY) ?? "";
@@ -54,6 +55,7 @@ const App = () => {
     sessionOrgId || state.organizations[0]?.id || ""
   );
   const [viewerEmail, setViewerEmail] = useState("");
+  const [staffEmail, setStaffEmail] = useState("");
   const [adminEmailInput, setAdminEmailInput] = useState("");
   const [showAdminGate, setShowAdminGate] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("staff");
@@ -143,6 +145,7 @@ const App = () => {
 
   const handleAddOrganization = () => {
     if (sessionOrgId) return;
+    if (orgLimitReached) return;
     if (!newOrgName || !newOrgLocation) return;
     runWithBusy("add-org", "Adding organization...", () => {
       const nextState = addOrganization(state, {
@@ -229,8 +232,16 @@ const App = () => {
 
   const requestAction = (staffId: string, type: "sign-in" | "sign-out") => {
     if (!selectedOrg) return;
+    if (selectedDateISO !== todayISO) return;
     const staff = selectedOrg.staff.find((person) => person.id === staffId);
     if (!staff) return;
+    if (
+      !isAdmin &&
+      selectedOrg.settings.attendanceEditPolicy === "self-only" &&
+      staffEmail.trim().toLowerCase() !== staff.email.toLowerCase()
+    ) {
+      return;
+    }
     setPendingAction({ staffId, staffName: staff.fullName, type });
   };
 
@@ -263,10 +274,19 @@ const App = () => {
       return DEFAULT_ADMIN_EMAIL;
     }
   })();
-  const isAdmin = viewerEmail.trim().toLowerCase() === adminEmail.toLowerCase();
+  const normalizedPrimaryAdmin = adminEmail.trim().toLowerCase();
+  const orgAdmins = selectedOrg?.settings.adminEmails ?? [];
+  const adminList = Array.from(
+    new Set(
+      [normalizedPrimaryAdmin, ...orgAdmins.map((email) => email.toLowerCase())].filter(
+        Boolean
+      )
+    )
+  );
+  const isAdmin = adminList.includes(viewerEmail.trim().toLowerCase());
   const effectiveViewMode: ViewMode = isAdmin ? viewMode : "staff";
   const isAdminInputMatch =
-    adminEmailInput.trim().toLowerCase() === adminEmail.toLowerCase();
+    adminList.includes(adminEmailInput.trim().toLowerCase());
 
   const handleSwitchToAdmin = () => {
     setShowAdminGate(true);
@@ -301,6 +321,7 @@ const App = () => {
 
   const handleAddOrgFromPage = (name: string, location: string) => {
     if (sessionOrgId) return;
+    if (orgLimitReached) return;
     runWithBusy("org-add", "Adding organization...", () => {
       const nextState = addOrganization(state, { name, location });
       commitState(nextState);
@@ -341,6 +362,18 @@ const App = () => {
     : "";
 
   const isBusy = Boolean(busyAction);
+  const canEditStaffMember = (staff: StaffMember) => {
+    if (!selectedOrg) return false;
+    if (isAdmin) return true;
+    const policy = selectedOrg.settings.attendanceEditPolicy ?? "any";
+    if (policy === "any") return true;
+    return staffEmail.trim().toLowerCase() === staff.email.toLowerCase();
+  };
+  const orgPlanTier = selectedOrg?.settings.planTier ?? "free";
+  const orgLimit =
+    orgPlanTier === "pro" ? 10 : orgPlanTier === "plus" ? 3 : 1;
+  const orgCount = state.organizations.length;
+  const orgLimitReached = !sessionOrgId && orgCount >= orgLimit;
 
   return (
     <div className="app-shell with-fixed-nav">
@@ -349,32 +382,6 @@ const App = () => {
           <span className="spinner" aria-hidden="true" />
           <span>{busyAction.label}</span>
         </div>
-      ) : null}
-      {isDashboardPage && effectiveViewMode === "admin" ? (
-        <header className="hero">
-          <div>
-            <p className="eyebrow">Staff Attendance</p>
-            <h1>Morning sign-in, evening sign-out for every organization.</h1>
-            <p className="lede">
-              Track daily attendance across multiple teams with a clear view of who is
-              clocked in, who is done, and who still needs a reminder.
-            </p>
-          </div>
-          <div className="hero-card">
-            <p className="hero-label">Today</p>
-            <p className="hero-date">{formatDateLong(todayISO)}</p>
-            <div className="hero-metric">
-              <span>Organizations</span>
-              <strong>{visibleOrganizations.length}</strong>
-            </div>
-            <div className="hero-metric">
-              <span>Staff on file</span>
-              <strong>
-                {visibleOrganizations.reduce((sum, org) => sum + org.staff.length, 0)}
-              </strong>
-            </div>
-          </div>
-        </header>
       ) : null}
 
       <div className={`topbar admin-nav ${navCompact ? "compact" : ""}`}>
@@ -488,16 +495,35 @@ const App = () => {
               {isAnalyticsPage ? "Back to dashboard" : "Analytics"}
             </button>
           ) : null}
+          {isAdmin ? (
+            <button
+              className={`nav-pill ${isSettingsPage ? "active" : ""}`}
+              type="button"
+              onClick={() => navigate(isSettingsPage ? "/app" : "/app/settings")}
+            >
+              <span className="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path
+                    d="M12 3.5 14 6.5l3.5.5-2.5 2.5.6 3.5-3.1-1.6-3.1 1.6.6-3.5L6.5 7l3.5-.5 2-3Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+              {isSettingsPage ? "Back to dashboard" : "Settings"}
+            </button>
+          ) : null}
         </div>
       </div>
 
-      {isOrganizationsPage && isAdmin ? (
+          {isOrganizationsPage && isAdmin ? (
         <main className="layout full">
           <OrganizationsPage
             organizations={visibleOrganizations}
             onAdd={handleAddOrgFromPage}
             onUpdate={handleUpdateOrgFromPage}
             onRemove={handleRemoveOrgFromPage}
+            orgLimit={orgLimit}
+            orgCount={orgCount}
             isBusy={isBusy}
             busyActionId={busyAction?.id ?? null}
           />
@@ -511,16 +537,198 @@ const App = () => {
             }
           />
         </main>
+      ) : isSettingsPage && isAdmin ? (
+        <main className="layout full">
+          <div className="panel settings-header">
+            <div>
+              <h2>Organization settings</h2>
+              <p className="muted">
+                Edit organization details, attendance rules, working days, and roles.
+              </p>
+            </div>
+          </div>
+          <div className="admin-layout">
+            <section className="panel admin-column">
+              <OrgSelector
+                organizations={visibleOrganizations}
+                selectedOrgId={selectedOrgId}
+                onSelect={setSelectedOrgId}
+              />
+
+              <div className="org-manager">
+                <div className="panel-header">
+                  <h3>Organization details</h3>
+                  <p className="muted">Update name and location.</p>
+                </div>
+                <div className="org-form">
+                  <label>
+                    Organization name
+                    <input
+                      type="text"
+                      value={orgNameDraft}
+                      onChange={(event) => setOrgNameDraft(event.target.value)}
+                      placeholder="Organization name"
+                      disabled={!selectedOrg}
+                    />
+                  </label>
+                  <label>
+                    Location
+                    <input
+                      type="text"
+                      value={orgLocationDraft}
+                      onChange={(event) => setOrgLocationDraft(event.target.value)}
+                      placeholder="Location"
+                      disabled={!selectedOrg}
+                    />
+                  </label>
+                  <div className="org-actions">
+                    <button
+                      className="btn solid"
+                      type="button"
+                      onClick={handleUpdateOrganization}
+                      disabled={!selectedOrg || isBusy}
+                    >
+                      {busyAction?.id === "update-org"
+                        ? "Saving..."
+                        : "Save changes"}
+                    </button>
+                    {!sessionOrgId ? (
+                      <button
+                        className="btn ghost danger"
+                        type="button"
+                        onClick={handleDeleteOrganization}
+                        disabled={!selectedOrg || isBusy}
+                      >
+                        {busyAction?.id === "remove-org"
+                          ? "Removing..."
+                          : "Remove organization"}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                {!sessionOrgId ? (
+                  <>
+                    <div className="org-divider" />
+                    <div className="org-form">
+                      <label>
+                        New organization name
+                        <input
+                          type="text"
+                          value={newOrgName}
+                          onChange={(event) => setNewOrgName(event.target.value)}
+                          placeholder="New organization"
+                          disabled={isBusy || orgLimitReached}
+                        />
+                      </label>
+                      <label>
+                        New organization location
+                        <input
+                          type="text"
+                          value={newOrgLocation}
+                          onChange={(event) => setNewOrgLocation(event.target.value)}
+                          placeholder="City"
+                          disabled={isBusy || orgLimitReached}
+                        />
+                      </label>
+                      <button
+                        className="btn solid"
+                        type="button"
+                        onClick={handleAddOrganization}
+                        disabled={isBusy || orgLimitReached}
+                      >
+                        {orgLimitReached
+                          ? "Organization limit reached"
+                          : busyAction?.id === "add-org"
+                            ? "Adding..."
+                            : "Add organization"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="muted">
+                    This account manages a single organization.
+                  </p>
+                )}
+              </div>
+
+              {selectedOrg ? (
+                <div className="org-summary">
+                  <h2>{selectedOrg.name}</h2>
+                  <p>{selectedOrg.location}</p>
+                  <div className="pill-row">
+                    <span className="pill">{selectedOrg.staff.length} staff</span>
+                    <span className="pill">{attendanceForDate.length} checked in</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <h3>No organization yet</h3>
+                  <p className="muted">
+                    Create your organization to start tracking attendance.
+                  </p>
+                  <button
+                    className="btn solid"
+                    type="button"
+                    onClick={() => navigate("/signup")}
+                  >
+                    Create organization
+                  </button>
+                </div>
+              )}
+            </section>
+
+            <section className="panel wide admin-column">
+              {selectedOrg ? (
+                <AdminSettings
+                  settings={selectedOrg.settings}
+                  onUpdate={handleUpdateSettings}
+                  isBusy={isBusy}
+                  primaryAdminEmail={adminEmail}
+                />
+              ) : (
+                <div className="empty-state">
+                  <h3>No organization selected</h3>
+                  <p>Select an organization to manage settings.</p>
+                </div>
+              )}
+            </section>
+          </div>
+        </main>
       ) : (
         <main className="layout full">
           {effectiveViewMode === "admin" ? (
             <>
-              <AdminDashboard organizations={visibleOrganizations} />
-              <div className="admin-layout">
-                <section className="panel admin-column">
-                  <div className="cta-card cta-top">
+              {isDashboardPage ? (
+                <section className="summary-row admin-summary-row">
+                  <div className="summary-card summary-intro">
+                    <p className="eyebrow">Staff Attendance</p>
+                    <h2>Morning sign-in, evening sign-out for every organization.</h2>
+                    <p className="muted">
+                      Track daily attendance across multiple teams with a clear view of
+                      who is clocked in, who is done, and who still needs a reminder.
+                    </p>
+                  </div>
+                  <div className="summary-card summary-today">
+                    <p className="summary-label">Today</p>
+                    <p className="summary-date">{formatDateLong(todayISO)}</p>
+                    <div className="summary-metric">
+                      <span>Organizations</span>
+                      <strong>{visibleOrganizations.length}</strong>
+                    </div>
+                    <div className="summary-metric">
+                      <span>Staff on file</span>
+                      <strong>
+                        {visibleOrganizations.reduce(
+                          (sum, org) => sum + org.staff.length,
+                          0
+                        )}
+                      </strong>
+                    </div>
+                  </div>
+                  <AdminDashboard organizations={visibleOrganizations} variant="card" />
+                  <div className="summary-card summary-onboard">
                     <div>
-                      <h3>Onboard staff</h3>
+                      <h2>Onboard staff</h2>
                       <p className="muted">
                         Add new team members and assign roles in seconds.
                       </p>
@@ -534,173 +742,96 @@ const App = () => {
                       Onboard staff
                     </button>
                   </div>
-
-                  <OrgSelector
-                    organizations={visibleOrganizations}
-                    selectedOrgId={selectedOrgId}
-                    onSelect={setSelectedOrgId}
-                  />
-
-                  <div className="org-manager">
-                    <div className="panel-header">
-                      <h3>Organization settings</h3>
-                      <p className="muted">Edit your organization details.</p>
+                  <div className="summary-card summary-org">
+                    <OrgSelector
+                      organizations={visibleOrganizations}
+                      selectedOrgId={selectedOrgId}
+                      onSelect={setSelectedOrgId}
+                    />
+                    <div className="identity-block">
+                      <label>
+                        Your email
+                        <input
+                          type="email"
+                          value={staffEmail}
+                          onChange={(event) => setStaffEmail(event.target.value)}
+                          placeholder="you@company.com"
+                        />
+                      </label>
+                      <p className="muted">
+                        Used for self-only sign-ins when enabled by admin.
+                      </p>
                     </div>
-                    <div className="org-form">
-                      <label>
-                        Organization name
-                        <input
-                          type="text"
-                          value={orgNameDraft}
-                          onChange={(event) => setOrgNameDraft(event.target.value)}
-                          placeholder="Organization name"
-                          disabled={!selectedOrg}
-                        />
-                      </label>
-                      <label>
-                        Location
-                        <input
-                          type="text"
-                          value={orgLocationDraft}
-                          onChange={(event) => setOrgLocationDraft(event.target.value)}
-                          placeholder="Location"
-                          disabled={!selectedOrg}
-                        />
-                      </label>
-                      <div className="org-actions">
+                    {selectedOrg ? (
+                      <div className="summary-org-info">
+                        <strong>{selectedOrg.name}</strong>
+                        <span className="muted">{selectedOrg.location}</span>
+                        <div className="pill-row">
+                          <span className="pill">{selectedOrg.staff.length} staff</span>
+                          <span className="pill">
+                            {attendanceForDate.length} checked in
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="summary-org-info">
+                        <strong>No organization yet</strong>
+                        <span className="muted">
+                          Create your organization to start tracking attendance.
+                        </span>
                         <button
                           className="btn solid"
                           type="button"
-                          onClick={handleUpdateOrganization}
-                          disabled={!selectedOrg || isBusy}
+                          onClick={() => navigate("/signup")}
                         >
-                          {busyAction?.id === "update-org"
-                            ? "Saving..."
-                            : "Save changes"}
+                          Create organization
                         </button>
-                        {!sessionOrgId ? (
-                          <button
-                            className="btn ghost danger"
-                            type="button"
-                            onClick={handleDeleteOrganization}
-                            disabled={!selectedOrg || isBusy}
-                          >
-                            {busyAction?.id === "remove-org"
-                              ? "Removing..."
-                              : "Remove organization"}
-                          </button>
-                        ) : null}
                       </div>
-                    </div>
-                    {!sessionOrgId ? (
-                      <>
-                        <div className="org-divider" />
-                        <div className="org-form">
-                          <label>
-                            New organization name
-                            <input
-                              type="text"
-                              value={newOrgName}
-                              onChange={(event) => setNewOrgName(event.target.value)}
-                              placeholder="New organization"
-                              disabled={isBusy}
-                            />
-                          </label>
-                          <label>
-                            New organization location
-                            <input
-                              type="text"
-                              value={newOrgLocation}
-                              onChange={(event) => setNewOrgLocation(event.target.value)}
-                              placeholder="City"
-                              disabled={isBusy}
-                            />
-                          </label>
-                          <button
-                            className="btn solid"
-                            type="button"
-                            onClick={handleAddOrganization}
-                            disabled={isBusy}
-                          >
-                            {busyAction?.id === "add-org"
-                              ? "Adding..."
-                              : "Add organization"}
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="muted">This account manages a single organization.</p>
                     )}
+                    <button
+                      className="btn ghost"
+                      type="button"
+                      onClick={() => navigate("/app/settings")}
+                    >
+                      Open settings
+                    </button>
                   </div>
-
-                  {selectedOrg ? (
-                    <div className="org-summary">
-                      <h2>{selectedOrg.name}</h2>
-                      <p>{selectedOrg.location}</p>
-                      <div className="pill-row">
-                        <span className="pill">{selectedOrg.staff.length} staff</span>
-                        <span className="pill">{attendanceForDate.length} checked in</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="empty-state">
-                      <h3>No organization yet</h3>
-                      <p className="muted">
-                        Create your organization to start tracking attendance.
-                      </p>
-                      <button
-                        className="btn solid"
-                        type="button"
-                        onClick={() => navigate("/signup")}
-                      >
-                        Create organization
-                      </button>
-                    </div>
-                  )}
-
-                  {selectedOrg ? (
-                    <AdminSettings
-                      settings={selectedOrg.settings}
-                      onUpdate={handleUpdateSettings}
-                      isBusy={isBusy}
-                    />
-                  ) : null}
-
                 </section>
+              ) : null}
 
-                <section className="panel wide admin-column">
-                  <div className="panel-header header-row">
-                    <div>
-                      <h2>Attendance</h2>
-                      <p className="muted">
-                        {canEditToday
-                          ? "Sign in or sign out as staff arrive and leave."
-                          : "Viewing historical attendance. Changes are disabled."}
-                      </p>
-                    </div>
-                    <DateSelector
-                      selectedDate={selectedDateISO}
-                      onChange={setSelectedDateISO}
-                    />
+              <section className="panel wide">
+                <div className="panel-header header-row">
+                  <div>
+                    <h2>Attendance</h2>
+                    <p className="muted">
+                      {canEditToday
+                        ? "Sign in or sign out as staff arrive and leave."
+                        : "Viewing historical attendance. Changes are disabled."}
+                    </p>
                   </div>
-                  {selectedOrg ? (
-                    <AttendanceTable
-                      staff={selectedOrg.staff}
-                      attendance={attendanceForDate}
-                      settings={selectedOrg.settings}
-                      onSignIn={(staffId) => requestAction(staffId, "sign-in")}
-                      onSignOut={(staffId) => requestAction(staffId, "sign-out")}
-                      canEdit={canEditToday}
-                      isBusy={isBusy}
-                    />
-                  ) : (
-                    <div className="empty-state">
-                      <h3>No organization selected</h3>
-                      <p>Select an organization to manage attendance.</p>
-                    </div>
-                  )}
-                </section>
-              </div>
+                  <DateSelector
+                    selectedDate={selectedDateISO}
+                    onChange={setSelectedDateISO}
+                  />
+                </div>
+                {selectedOrg ? (
+                  <AttendanceTable
+                    staff={selectedOrg.staff}
+                    attendance={attendanceForDate}
+                    settings={selectedOrg.settings}
+                    onSignIn={(staffId) => requestAction(staffId, "sign-in")}
+                    onSignOut={(staffId) => requestAction(staffId, "sign-out")}
+                    canEdit={canEditToday}
+                    canEditStaff={canEditStaffMember}
+                    isBusy={isBusy}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <h3>No organization selected</h3>
+                    <p>Select an organization to manage attendance.</p>
+                  </div>
+                )}
+              </section>
             </>
           ) : (
             <>
@@ -779,6 +910,7 @@ const App = () => {
                     onSignIn={(staffId) => requestAction(staffId, "sign-in")}
                     onSignOut={(staffId) => requestAction(staffId, "sign-out")}
                     canEdit={canEditToday}
+                    canEditStaff={canEditStaffMember}
                     isBusy={isBusy}
                   />
                 ) : (

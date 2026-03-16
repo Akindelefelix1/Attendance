@@ -13,6 +13,9 @@ export type OrgSettings = {
   roles: string[];
   workingDays: number[];
   analyticsIncludeFutureDays: boolean;
+  attendanceEditPolicy: "any" | "self-only";
+  adminEmails: string[];
+  planTier: "free" | "plus" | "pro";
 };
 
 export type Organization = {

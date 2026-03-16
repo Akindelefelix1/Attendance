@@ -364,6 +364,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     <span className="plan-icon" aria-hidden="true" />
                     Late and early flags
                   </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Admins: 1
+                  </li>
                 </ul>
                 <button className="btn ghost" type="button">
                   Get started
@@ -389,6 +393,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     <span className="plan-icon" aria-hidden="true" />
                     Priority support
                   </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Admins: 3
+                  </li>
                 </ul>
                 <button className="btn solid" type="button">
                   Choose Plus
@@ -413,6 +421,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                   <li>
                     <span className="plan-icon" aria-hidden="true" />
                     Dedicated success manager
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Admins: 10
                   </li>
                 </ul>
                 <button className="btn ghost" type="button">
@@ -584,20 +596,24 @@ const LandingPage = ({ onEnter, page }: Props) => {
             <div className="plan-card">
               <h3>Starter</h3>
               <p className="plan-price">Free</p>
-              <ul>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Daily sign-in and sign-out
-                </li>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Organization staff list
-                </li>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Late and early flags
-                </li>
-              </ul>
+                <ul>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Daily sign-in and sign-out
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Organization staff list
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Late and early flags
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Admins: 1
+                  </li>
+                </ul>
               <button className="btn ghost" type="button">
                 Get started
               </button>
@@ -605,24 +621,28 @@ const LandingPage = ({ onEnter, page }: Props) => {
             <div className="plan-card highlight">
               <h3>Plus</h3>
               <p className="plan-price">NGN 45,000 / month</p>
-              <ul>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Attendance history export (CSV)
-                </li>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Shift and role analytics
-                </li>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Manager notifications
-                </li>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Priority support
-                </li>
-              </ul>
+                <ul>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Attendance history export (CSV)
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Shift and role analytics
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Manager notifications
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Priority support
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Admins: 3
+                  </li>
+                </ul>
               <button className="btn solid" type="button">
                 Choose Plus
               </button>
@@ -630,24 +650,28 @@ const LandingPage = ({ onEnter, page }: Props) => {
             <div className="plan-card">
               <h3>Pro</h3>
               <p className="plan-price">NGN 120,000 / month</p>
-              <ul>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Multi-location dashboards
-                </li>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Custom attendance rules
-                </li>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Payroll integrations
-                </li>
-                <li>
-                  <span className="plan-icon" aria-hidden="true" />
-                  Dedicated success manager
-                </li>
-              </ul>
+                <ul>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Multi-location dashboards
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Custom attendance rules
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Payroll integrations
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Dedicated success manager
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Admins: 10
+                  </li>
+                </ul>
               <button className="btn ghost" type="button">
                 Talk to sales
               </button>

@@ -7,7 +7,10 @@ const defaultSettings: OrgSettings = {
   earlyCheckoutBeforeTime: "17:00",
   roles: [],
   workingDays: [1, 2, 3, 4, 5],
-  analyticsIncludeFutureDays: false
+  analyticsIncludeFutureDays: false,
+  attendanceEditPolicy: "any",
+  adminEmails: [],
+  planTier: "free"
 };
 
 type PersistedState = {
@@ -26,7 +29,11 @@ const normalizeOrganizations = (organizations: Organization[]): Organization[] =
       workingDays: org.settings?.workingDays ?? defaultSettings.workingDays,
       analyticsIncludeFutureDays:
         org.settings?.analyticsIncludeFutureDays ??
-        defaultSettings.analyticsIncludeFutureDays
+        defaultSettings.analyticsIncludeFutureDays,
+      attendanceEditPolicy:
+        org.settings?.attendanceEditPolicy ?? defaultSettings.attendanceEditPolicy,
+      adminEmails: org.settings?.adminEmails ?? defaultSettings.adminEmails,
+      planTier: org.settings?.planTier ?? defaultSettings.planTier
     }
   }));
 };
@@ -89,7 +96,11 @@ export const addOrganization = (
       workingDays: org.settings?.workingDays ?? defaultSettings.workingDays,
       analyticsIncludeFutureDays:
         org.settings?.analyticsIncludeFutureDays ??
-        defaultSettings.analyticsIncludeFutureDays
+        defaultSettings.analyticsIncludeFutureDays,
+      attendanceEditPolicy:
+        org.settings?.attendanceEditPolicy ?? defaultSettings.attendanceEditPolicy,
+      adminEmails: org.settings?.adminEmails ?? defaultSettings.adminEmails,
+      planTier: org.settings?.planTier ?? defaultSettings.planTier
     }
   };
   return { ...state, organizations: [...state.organizations, newOrg] };

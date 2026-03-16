@@ -22,7 +22,7 @@ body {
   margin: 0;
   font-family: "Space Grotesk", sans-serif;
   color: var(--ink);
-  background: radial-gradient(circle at top left, #fff4e7, var(--bg) 55%);
+  background: #ffffff;
   min-height: 100vh;
 }
 
@@ -705,6 +705,10 @@ input {
   padding-bottom: 0.25rem;
 }
 
+.summary-row.admin-summary-row {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .summary-card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -730,6 +734,19 @@ input {
   margin: 0;
 }
 
+.summary-date {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.summary-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
 .summary-intro h2,
 .summary-card h2 {
   font-size: 1.1rem;
@@ -742,6 +759,36 @@ input {
 .summary-card .date-select input {
   min-width: 0;
   width: 100%;
+}
+
+.summary-intro {
+  background: linear-gradient(140deg, #fff2e4 0%, #ffffff 65%);
+  border-color: #f2d9c4;
+}
+
+.summary-today {
+  background: linear-gradient(140deg, #e7f5ff 0%, #ffffff 70%);
+  border-color: #c9e4f7;
+}
+
+.admin-dashboard-card {
+  background: linear-gradient(140deg, #f3edff 0%, #ffffff 70%);
+  border-color: #d7c7ff;
+}
+
+.summary-onboard {
+  background: linear-gradient(140deg, #e9f8f1 0%, #ffffff 70%);
+  border-color: #c9ecd9;
+}
+
+.summary-org {
+  background: linear-gradient(140deg, #fff7e7 0%, #ffffff 70%);
+  border-color: #f2e0c2;
+}
+
+.staff-dashboard-card {
+  background: linear-gradient(140deg, #f0f4ff 0%, #ffffff 70%);
+  border-color: #d6defd;
 }
 
 .staff-dashboard-card .dashboard-grid {
@@ -760,6 +807,14 @@ input {
 
 .summary-org-info .btn {
   justify-self: start;
+}
+
+.summary-card .identity-block {
+  margin-bottom: 0;
+}
+
+.settings-header {
+  margin-bottom: 1.25rem;
 }
 
 .dashboard-grid {

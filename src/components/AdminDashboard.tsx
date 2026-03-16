@@ -2,16 +2,22 @@
 
 type Props = {
   organizations: Organization[];
+  variant?: "panel" | "card";
 };
 
-const AdminDashboard = ({ organizations }: Props) => {
+const AdminDashboard = ({ organizations, variant = "panel" }: Props) => {
   const totalStaff = organizations.reduce((sum, org) => sum + org.staff.length, 0);
   const totalOrgs = organizations.length;
   const totalCities = new Set(organizations.map((org) => org.location)).size;
+  const isCard = variant === "card";
 
   return (
-    <section className="panel dashboard admin-dashboard">
-      <div className="panel-header">
+    <section
+      className={
+        isCard ? "summary-card admin-dashboard-card" : "panel dashboard admin-dashboard"
+      }
+    >
+      <div className={isCard ? "summary-header" : "panel-header"}>
         <h2>Admin dashboard</h2>
         <p className="muted">Overview for organizations, staff, and attendance rules.</p>
       </div>
@@ -29,21 +35,23 @@ const AdminDashboard = ({ organizations }: Props) => {
           <strong className="stat-value">{totalCities}</strong>
         </div>
       </div>
-      <div className="org-cards">
-        {organizations.map((org) => (
-          <div className="org-card" key={org.id}>
-            <div>
-              <h3>{org.name}</h3>
-              <p className="muted">{org.location}</p>
+      {isCard ? null : (
+        <div className="org-cards">
+          {organizations.map((org) => (
+            <div className="org-card" key={org.id}>
+              <div>
+                <h3>{org.name}</h3>
+                <p className="muted">{org.location}</p>
+              </div>
+              <div className="org-meta">
+                <span>{org.staff.length} staff</span>
+                <span>Late after {org.settings.lateAfterTime}</span>
+                <span>Early before {org.settings.earlyCheckoutBeforeTime}</span>
+              </div>
             </div>
-            <div className="org-meta">
-              <span>{org.staff.length} staff</span>
-              <span>Late after {org.settings.lateAfterTime}</span>
-              <span>Early before {org.settings.earlyCheckoutBeforeTime}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 };

@@ -6,6 +6,8 @@ type Props = {
   onAdd: (name: string, location: string) => void;
   onUpdate: (orgId: string, name: string, location: string) => void;
   onRemove: (orgId: string) => void;
+  orgLimit: number;
+  orgCount: number;
   isBusy?: boolean;
   busyActionId?: string | null;
 };
@@ -17,6 +19,8 @@ const OrganizationsPage = ({
   onAdd,
   onUpdate,
   onRemove,
+  orgLimit,
+  orgCount,
   isBusy = false,
   busyActionId = null
 }: Props) => {
@@ -34,6 +38,7 @@ const OrganizationsPage = ({
 
   const handleAdd = () => {
     if (!newName.trim() || !newLocation.trim()) return;
+    if (orgCount >= orgLimit) return;
     onAdd(newName.trim(), newLocation.trim());
     setNewName("");
     setNewLocation("");
@@ -61,18 +66,30 @@ const OrganizationsPage = ({
           placeholder="Organization name"
           value={newName}
           onChange={(event) => setNewName(event.target.value)}
-          disabled={isBusy}
+          disabled={isBusy || orgCount >= orgLimit}
         />
         <input
           type="text"
           placeholder="Location"
           value={newLocation}
           onChange={(event) => setNewLocation(event.target.value)}
-          disabled={isBusy}
+          disabled={isBusy || orgCount >= orgLimit}
         />
-        <button className="btn solid" type="button" onClick={handleAdd} disabled={isBusy}>
-          {busyActionId === "org-add" ? "Adding..." : "Add organization"}
+        <button
+          className="btn solid"
+          type="button"
+          onClick={handleAdd}
+          disabled={isBusy || orgCount >= orgLimit}
+        >
+          {orgCount >= orgLimit
+            ? "Organization limit reached"
+            : busyActionId === "org-add"
+              ? "Adding..."
+              : "Add organization"}
         </button>
+        <p className="muted">
+          {orgCount} of {orgLimit} organizations used for this plan.
+        </p>
       </div>
 
       <div className="org-table">
