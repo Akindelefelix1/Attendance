@@ -368,6 +368,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     <span className="plan-icon" aria-hidden="true" />
                     Admins: 1
                   </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Staff: up to 20
+                  </li>
                 </ul>
                 <button className="btn ghost" type="button">
                   Get started
@@ -397,6 +401,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     <span className="plan-icon" aria-hidden="true" />
                     Admins: 3
                   </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Staff: up to 100
+                  </li>
                 </ul>
                 <button className="btn solid" type="button">
                   Choose Plus
@@ -425,6 +433,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                   <li>
                     <span className="plan-icon" aria-hidden="true" />
                     Admins: 10
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Staff: unlimited
                   </li>
                 </ul>
                 <button className="btn ghost" type="button">
@@ -613,6 +625,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     <span className="plan-icon" aria-hidden="true" />
                     Admins: 1
                   </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Staff: up to 20
+                  </li>
                 </ul>
               <button className="btn ghost" type="button">
                 Get started
@@ -642,6 +658,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     <span className="plan-icon" aria-hidden="true" />
                     Admins: 3
                   </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Staff: up to 100
+                  </li>
                 </ul>
               <button className="btn solid" type="button">
                 Choose Plus
@@ -670,6 +690,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                   <li>
                     <span className="plan-icon" aria-hidden="true" />
                     Admins: 10
+                  </li>
+                  <li>
+                    <span className="plan-icon" aria-hidden="true" />
+                    Staff: unlimited
                   </li>
                 </ul>
               <button className="btn ghost" type="button">

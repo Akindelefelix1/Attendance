@@ -187,6 +187,7 @@ const App = () => {
 
   const handleAddStaff = (payload: Omit<StaffMember, "id">) => {
     if (!selectedOrg) return;
+    if (staffLimitReached) return;
     runWithBusy("add-staff", "Adding staff member...", () => {
       const staff = createStaffMember(payload);
       const nextState = addStaffToOrg(state, selectedOrg.id, staff);
@@ -374,6 +375,15 @@ const App = () => {
     orgPlanTier === "pro" ? 10 : orgPlanTier === "plus" ? 3 : 1;
   const orgCount = state.organizations.length;
   const orgLimitReached = !sessionOrgId && orgCount >= orgLimit;
+  const staffLimit = selectedOrg
+    ? selectedOrg.settings.planTier === "pro"
+      ? Infinity
+      : selectedOrg.settings.planTier === "plus"
+        ? 100
+        : 20
+    : 0;
+  const staffLimitReached =
+    Boolean(selectedOrg) && staffLimit !== Infinity && selectedOrg.staff.length >= staffLimit;
 
   return (
     <div className="app-shell with-fixed-nav">
@@ -734,12 +744,12 @@ const App = () => {
                       </p>
                     </div>
                     <button
-                      className="btn solid"
+                      className="btn solid cta-rect"
                       type="button"
                       onClick={handleOpenOnboard}
-                      disabled={!selectedOrg || isBusy}
+                      disabled={!selectedOrg || isBusy || staffLimitReached}
                     >
-                      Onboard staff
+                      {staffLimitReached ? "Staff limit reached" : "Onboard staff"}
                     </button>
                   </div>
                   <div className="summary-card summary-org">
@@ -980,6 +990,8 @@ const App = () => {
               onAddStaff={handleAddStaff}
               roles={selectedOrg?.settings.roles ?? []}
               disabled={!selectedOrg}
+              limitReached={staffLimitReached}
+              limitLabel={staffLimit === Infinity ? "Unlimited" : String(staffLimit)}
               isLoading={busyAction?.id === "add-staff"}
             />
             <div className="modal-actions">

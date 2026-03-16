@@ -5,6 +5,8 @@ type Props = {
   onAddStaff: (payload: Omit<StaffMember, "id">) => void;
   roles: string[];
   disabled?: boolean;
+  limitReached?: boolean;
+  limitLabel?: string;
   isLoading?: boolean;
 };
 
@@ -12,6 +14,8 @@ const StaffOnboarding = ({
   onAddStaff,
   roles,
   disabled = false,
+  limitReached = false,
+  limitLabel = "0",
   isLoading = false
 }: Props) => {
   const [fullName, setFullName] = useState("");
@@ -37,6 +41,11 @@ const StaffOnboarding = ({
         <h3>Onboard staff</h3>
         <p className="muted">Add new team members for this organization.</p>
       </div>
+      {limitReached ? (
+        <p className="muted">
+          Staff limit reached ({limitLabel}). Upgrade your plan to add more staff.
+        </p>
+      ) : null}
       <label>
         Full name
         <input
@@ -44,7 +53,7 @@ const StaffOnboarding = ({
           value={fullName}
           onChange={(event) => setFullName(event.target.value)}
           placeholder="e.g. Ifeanyi Eze"
-          disabled={disabled || isLoading}
+          disabled={disabled || isLoading || limitReached}
           required
         />
       </label>
@@ -54,7 +63,7 @@ const StaffOnboarding = ({
           <select
             value={role}
             onChange={(event) => setRole(event.target.value)}
-            disabled={disabled || isLoading}
+            disabled={disabled || isLoading || limitReached}
             required
           >
             {roles.map((roleOption) => (
@@ -69,7 +78,7 @@ const StaffOnboarding = ({
             value={role}
             onChange={(event) => setRole(event.target.value)}
             placeholder="e.g. Customer Success"
-            disabled={disabled || isLoading}
+            disabled={disabled || isLoading || limitReached}
             required
           />
         )}
@@ -81,12 +90,16 @@ const StaffOnboarding = ({
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="name@company.com"
-          disabled={disabled || isLoading}
+          disabled={disabled || isLoading || limitReached}
           required
         />
       </label>
-      <button className="btn solid" type="submit" disabled={disabled || isLoading}>
-        {isLoading ? "Adding..." : "Add staff member"}
+      <button
+        className="btn solid"
+        type="submit"
+        disabled={disabled || isLoading || limitReached}
+      >
+        {limitReached ? "Staff limit reached" : isLoading ? "Adding..." : "Add staff member"}
       </button>
     </form>
   );

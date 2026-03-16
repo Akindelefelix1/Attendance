@@ -179,6 +179,11 @@ const AnalyticsPage = ({ organization, attendanceRecords }: Props) => {
       { late: 0, early: 0, absent: 0 }
     );
   }, [analytics]);
+  const rangeLabel = sortedRange.length
+    ? `Highlights for ${formatDateLong(sortedRange[0])} to ${formatDateLong(
+        sortedRange[sortedRange.length - 1]
+      )}.`
+    : "No working days available for the selected range.";
 
   if (!organization) {
     return (
@@ -207,10 +212,7 @@ const AnalyticsPage = ({ organization, attendanceRecords }: Props) => {
       <div className="analytics-hero">
         <div>
           <h2>{organization.name} analytics</h2>
-          <p className="muted">
-            Highlights for {formatDateLong(sortedRange[0])} to{" "}
-            {formatDateLong(sortedRange[sortedRange.length - 1])}.
-          </p>
+          <p className="muted">{rangeLabel}</p>
         </div>
         <div className="analytics-range">
           <button
