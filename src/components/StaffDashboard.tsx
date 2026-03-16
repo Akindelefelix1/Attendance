@@ -4,17 +4,30 @@ type Props = {
   organizations: Organization[];
   selectedOrgId: string;
   attendanceForDate: AttendanceRecord[];
+  variant?: "panel" | "card";
 };
 
-const StaffDashboard = ({ organizations, selectedOrgId, attendanceForDate }: Props) => {
+const StaffDashboard = ({
+  organizations,
+  selectedOrgId,
+  attendanceForDate,
+  variant = "panel"
+}: Props) => {
   const org = organizations.find((item) => item.id === selectedOrgId);
   const totalStaff = org?.staff.length ?? 0;
   const checkedIn = attendanceForDate.length;
   const signedOut = attendanceForDate.filter((record) => record.signOutAt).length;
+  const isCard = variant === "card";
 
   return (
-    <section className="panel dashboard staff-dashboard">
-      <div className="panel-header">
+    <section
+      className={
+        isCard
+          ? "summary-card staff-dashboard-card"
+          : "panel dashboard staff-dashboard"
+      }
+    >
+      <div className={isCard ? "summary-header" : "panel-header"}>
         <h2>Staff dashboard</h2>
         <p className="muted">Quick status for your organization today.</p>
       </div>

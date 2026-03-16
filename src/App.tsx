@@ -350,7 +350,7 @@ const App = () => {
           <span>{busyAction.label}</span>
         </div>
       ) : null}
-      {isDashboardPage ? (
+      {isDashboardPage && effectiveViewMode === "admin" ? (
         <header className="hero">
           <div>
             <p className="eyebrow">Staff Attendance</p>
@@ -704,42 +704,57 @@ const App = () => {
             </>
           ) : (
             <>
-              <StaffDashboard
-                organizations={visibleOrganizations}
-                selectedOrgId={selectedOrgId}
-                attendanceForDate={attendanceForDate}
-              />
-              <section className="panel">
-                <OrgSelector
-                  organizations={visibleOrganizations}
-                  selectedOrgId={selectedOrgId}
-                  onSelect={setSelectedOrgId}
-                />
-                {selectedOrg ? (
-                  <div className="org-summary">
-                    <h2>{selectedOrg.name}</h2>
-                    <p>{selectedOrg.location}</p>
-                    <div className="pill-row">
-                      <span className="pill">{selectedOrg.staff.length} staff</span>
-                      <span className="pill">{attendanceForDate.length} checked in</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="empty-state">
-                    <h3>No organization yet</h3>
+              {isDashboardPage ? (
+                <section className="summary-row">
+                  <div className="summary-card summary-intro">
+                    <p className="eyebrow">Staff Attendance</p>
+                    <h2>Morning sign-in, evening sign-out for every organization.</h2>
                     <p className="muted">
-                      Create your organization to start tracking attendance.
+                      Track daily attendance across multiple teams with a clear view of
+                      who is clocked in, who is done, and who still needs a reminder.
                     </p>
-                    <button
-                      className="btn solid"
-                      type="button"
-                      onClick={() => navigate("/signup")}
-                    >
-                      Create organization
-                    </button>
                   </div>
-                )}
-              </section>
+                  <StaffDashboard
+                    organizations={visibleOrganizations}
+                    selectedOrgId={selectedOrgId}
+                    attendanceForDate={attendanceForDate}
+                    variant="card"
+                  />
+                  <div className="summary-card summary-org">
+                    <OrgSelector
+                      organizations={visibleOrganizations}
+                      selectedOrgId={selectedOrgId}
+                      onSelect={setSelectedOrgId}
+                    />
+                    {selectedOrg ? (
+                      <div className="summary-org-info">
+                        <strong>{selectedOrg.name}</strong>
+                        <span className="muted">{selectedOrg.location}</span>
+                        <div className="pill-row">
+                          <span className="pill">{selectedOrg.staff.length} staff</span>
+                          <span className="pill">
+                            {attendanceForDate.length} checked in
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="summary-org-info">
+                        <strong>No organization yet</strong>
+                        <span className="muted">
+                          Create your organization to start tracking attendance.
+                        </span>
+                        <button
+                          className="btn solid"
+                          type="button"
+                          onClick={() => navigate("/signup")}
+                        >
+                          Create organization
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              ) : null}
 
               <section className="panel wide">
                 <div className="panel-header header-row">

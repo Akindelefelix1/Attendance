@@ -695,6 +695,73 @@ input {
   margin-bottom: 1.5rem;
 }
 
+.summary-row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  align-items: start;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.summary-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.1rem;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 0.7rem;
+  min-width: 220px;
+}
+
+.summary-header {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.summary-label {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.summary-intro h2,
+.summary-card h2 {
+  font-size: 1.1rem;
+}
+
+.summary-card .date-select {
+  gap: 0.35rem;
+}
+
+.summary-card .date-select input {
+  min-width: 0;
+  width: 100%;
+}
+
+.staff-dashboard-card .dashboard-grid {
+  grid-template-columns: repeat(3, minmax(80px, 1fr));
+  gap: 0.6rem;
+}
+
+.staff-dashboard-card .stat-card {
+  padding: 0.75rem;
+}
+
+.summary-org-info {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.summary-org-info .btn {
+  justify-self: start;
+}
+
 .dashboard-grid {
   display: grid;
   gap: 0.75rem;
