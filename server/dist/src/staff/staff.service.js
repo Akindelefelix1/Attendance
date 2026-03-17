@@ -75,8 +75,19 @@ let StaffService = class StaffService {
             data: payload
         });
     }
+    updateInOrg(id, organizationId, payload) {
+        return this.prisma.staffMember.update({
+            where: { id, organizationId },
+            data: payload
+        });
+    }
     remove(id) {
         return this.prisma.staffMember.delete({ where: { id } });
+    }
+    removeInOrg(id, organizationId) {
+        return this.prisma.staffMember.delete({
+            where: { id, organizationId }
+        });
     }
 };
 exports.StaffService = StaffService;

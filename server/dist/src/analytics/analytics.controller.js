@@ -23,7 +23,19 @@ let AnalyticsController = class AnalyticsController {
     constructor(analyticsService) {
         this.analyticsService = analyticsService;
     }
-    getAnalytics(orgId, range = "week", filter = "all") {
+    assertOrgScope(requestOrgId, user) {
+        if (!user) {
+            throw new common_1.ForbiddenException("Authentication required");
+        }
+        if (user.role === "super_admin") {
+            return;
+        }
+        if (!user.orgId || user.orgId !== requestOrgId) {
+            throw new common_1.ForbiddenException("Access denied for this organization");
+        }
+    }
+    getAnalytics(orgId, range = "week", filter = "all", req) {
+        this.assertOrgScope(orgId, req.user);
         return this.analyticsService.getAnalytics(orgId, range, filter);
     }
 };
@@ -35,8 +47,9 @@ __decorate([
     __param(0, (0, common_1.Query)("orgId")),
     __param(1, (0, common_1.Query)("range")),
     __param(2, (0, common_1.Query)("filter")),
+    __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, Object]),
     __metadata("design:returntype", void 0)
 ], AnalyticsController.prototype, "getAnalytics", null);
 exports.AnalyticsController = AnalyticsController = __decorate([

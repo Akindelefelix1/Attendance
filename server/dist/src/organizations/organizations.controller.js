@@ -23,10 +23,28 @@ let OrganizationsController = class OrganizationsController {
     constructor(organizationsService) {
         this.organizationsService = organizationsService;
     }
-    findAll() {
-        return this.organizationsService.findAll();
+    assertOrgScope(requestOrgId, user) {
+        if (!user) {
+            throw new common_1.ForbiddenException("Authentication required");
+        }
+        if (user.role === "super_admin") {
+            return;
+        }
+        if (!user.orgId || user.orgId !== requestOrgId) {
+            throw new common_1.ForbiddenException("Access denied for this organization");
+        }
     }
-    findOne(id) {
+    findAll(req) {
+        if (req.user?.role === "super_admin") {
+            return this.organizationsService.findAll();
+        }
+        if (!req.user?.orgId) {
+            throw new common_1.ForbiddenException("Access denied for this organization");
+        }
+        return this.organizationsService.findAllForOrg(req.user.orgId);
+    }
+    findOne(id, req) {
+        this.assertOrgScope(id, req.user);
         return this.organizationsService.findOne(id);
     }
     create(body) {
@@ -43,27 +61,35 @@ let OrganizationsController = class OrganizationsController {
             planTier: body.planTier ?? "free"
         });
     }
-    update(id, body) {
+    update(id, req, body) {
+        this.assertOrgScope(id, req.user);
         return this.organizationsService.update(id, {
             ...body
         });
     }
-    remove(id) {
+    remove(id, req) {
+        this.assertOrgScope(id, req.user);
         return this.organizationsService.remove(id);
     }
 };
 exports.OrganizationsController = OrganizationsController;
 __decorate([
     (0, common_1.Get)(),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
+    (0, permissions_decorator_1.Permissions)("manage_organizations"),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(":id"),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
+    (0, permissions_decorator_1.Permissions)("manage_organizations"),
     __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "findOne", null);
 __decorate([
@@ -78,9 +104,10 @@ __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
     (0, permissions_decorator_1.Permissions)("manage_organizations"),
     __param(0, (0, common_1.Param)("id")),
-    __param(1, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "update", null);
 __decorate([
@@ -88,8 +115,9 @@ __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
     (0, permissions_decorator_1.Permissions)("manage_organizations"),
     __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "remove", null);
 exports.OrganizationsController = OrganizationsController = __decorate([

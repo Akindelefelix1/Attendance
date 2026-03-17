@@ -13,6 +13,13 @@ export class OrganizationsService {
     });
   }
 
+  findAllForOrg(orgId: string) {
+    return this.prisma.organization.findMany({
+      where: { id: orgId },
+      include: { staff: true }
+    });
+  }
+
   findOne(id: string) {
     return this.prisma.organization.findUnique({
       where: { id },

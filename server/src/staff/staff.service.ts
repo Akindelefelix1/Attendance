@@ -33,7 +33,24 @@ export class StaffService {
     });
   }
 
+  updateInOrg(
+    id: string,
+    organizationId: string,
+    payload: { fullName?: string; role?: string; email?: string }
+  ) {
+    return this.prisma.staffMember.update({
+      where: { id, organizationId },
+      data: payload
+    });
+  }
+
   remove(id: string) {
     return this.prisma.staffMember.delete({ where: { id } });
+  }
+
+  removeInOrg(id: string, organizationId: string) {
+    return this.prisma.staffMember.delete({
+      where: { id, organizationId }
+    });
   }
 }

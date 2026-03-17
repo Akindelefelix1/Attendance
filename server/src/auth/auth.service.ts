@@ -85,25 +85,46 @@ export class AuthService {
   }
 
   async login(email: string, password: string, res: Response) {
-    const admin = await this.prisma.adminUser.findFirst({
-      where: { email: email.trim().toLowerCase() }
+    const normalizedEmail = email.trim().toLowerCase();
+    const admins = await this.prisma.adminUser.findMany({
+      where: { email: normalizedEmail },
+      orderBy: { createdAt: "desc" }
     });
-    if (!admin) {
+    if (admins.length === 0) {
       throw new UnauthorizedException("Invalid credentials");
     }
-    const ok = await bcrypt.compare(password, admin.passwordHash);
-    if (!ok) {
+
+    let matchedAdmin: (typeof admins)[number] | null = null;
+    for (const admin of admins) {
+      const ok = await bcrypt.compare(password, admin.passwordHash);
+      if (ok) {
+        matchedAdmin = admin;
+        break;
+      }
+    }
+
+    if (!matchedAdmin) {
       throw new UnauthorizedException("Invalid credentials");
     }
+
     const token = this.jwtService.sign({
-      sub: admin.id,
-      orgId: admin.organizationId,
-      email: admin.email,
+      sub: matchedAdmin.id,
+      orgId: matchedAdmin.organizationId,
+      email: matchedAdmin.email,
       role: "admin",
-      permissions: admin.permissions.length ? admin.permissions : ADMIN_PERMISSIONS
+      permissions:
+        matchedAdmin.permissions.length > 0
+          ? matchedAdmin.permissions
+          : ADMIN_PERMISSIONS
     });
     this.setCookie(res, token);
-    return { admin: { id: admin.id, email: admin.email, orgId: admin.organizationId } };
+    return {
+      admin: {
+        id: matchedAdmin.id,
+        email: matchedAdmin.email,
+        orgId: matchedAdmin.organizationId
+      }
+    };
   }
 
   async staffLogin(email: string, password: string, res: Response) {

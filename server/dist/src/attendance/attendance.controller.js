@@ -23,22 +23,37 @@ let AttendanceController = class AttendanceController {
     constructor(attendanceService) {
         this.attendanceService = attendanceService;
     }
-    list(orgId, dateISO) {
+    assertOrgScope(requestOrgId, user) {
+        if (!user) {
+            throw new common_1.ForbiddenException("Authentication required");
+        }
+        if (user.role === "super_admin") {
+            return;
+        }
+        if (!user.orgId || user.orgId !== requestOrgId) {
+            throw new common_1.ForbiddenException("Access denied for this organization");
+        }
+    }
+    list(orgId, dateISO, req) {
+        this.assertOrgScope(orgId, req.user);
         return this.attendanceService.listByOrganizationAndDate(orgId, dateISO);
     }
-    listForOrganization(orgId) {
+    listForOrganization(orgId, req) {
+        this.assertOrgScope(orgId, req.user);
         return this.attendanceService.listByOrganization(orgId);
     }
     signIn(body, req) {
         if (req.user?.role === "staff" && req.user.id !== body.staffId) {
             return null;
         }
+        this.assertOrgScope(body.organizationId, req.user);
         return this.attendanceService.signIn(body.organizationId, body.staffId, body.dateISO);
     }
     signOut(body, req) {
         if (req.user?.role === "staff" && req.user.id !== body.staffId) {
             return null;
         }
+        this.assertOrgScope(body.organizationId, req.user);
         return this.attendanceService.signOut(body.organizationId, body.staffId, body.dateISO);
     }
 };
@@ -49,8 +64,9 @@ __decorate([
     (0, permissions_decorator_1.Permissions)("manage_attendance"),
     __param(0, (0, common_1.Query)("orgId")),
     __param(1, (0, common_1.Query)("dateISO")),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", void 0)
 ], AttendanceController.prototype, "list", null);
 __decorate([
@@ -58,8 +74,9 @@ __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
     (0, permissions_decorator_1.Permissions)("manage_attendance"),
     __param(0, (0, common_1.Param)("orgId")),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], AttendanceController.prototype, "listForOrganization", null);
 __decorate([

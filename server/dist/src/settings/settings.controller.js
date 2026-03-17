@@ -23,10 +23,23 @@ let SettingsController = class SettingsController {
     constructor(settingsService) {
         this.settingsService = settingsService;
     }
-    getSettings(orgId) {
+    assertOrgScope(requestOrgId, user) {
+        if (!user) {
+            throw new common_1.ForbiddenException("Authentication required");
+        }
+        if (user.role === "super_admin") {
+            return;
+        }
+        if (!user.orgId || user.orgId !== requestOrgId) {
+            throw new common_1.ForbiddenException("Access denied for this organization");
+        }
+    }
+    getSettings(orgId, req) {
+        this.assertOrgScope(orgId, req.user);
         return this.settingsService.getSettings(orgId);
     }
-    updateSettings(orgId, body) {
+    updateSettings(orgId, req, body) {
+        this.assertOrgScope(orgId, req.user);
         return this.settingsService.updateSettings(orgId, body);
     }
 };
@@ -36,8 +49,9 @@ __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
     (0, permissions_decorator_1.Permissions)("manage_settings"),
     __param(0, (0, common_1.Param)("orgId")),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], SettingsController.prototype, "getSettings", null);
 __decorate([
@@ -45,9 +59,10 @@ __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
     (0, permissions_decorator_1.Permissions)("manage_settings"),
     __param(0, (0, common_1.Param)("orgId")),
-    __param(1, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], SettingsController.prototype, "updateSettings", null);
 exports.SettingsController = SettingsController = __decorate([

@@ -2,10 +2,12 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
   Post,
+  Req,
   UseGuards
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
@@ -17,13 +19,42 @@ import { PermissionsGuard } from "../auth/permissions.guard";
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
+  private assertOrgScope(
+    requestOrgId: string,
+    user?: { orgId?: string; role?: string }
+  ) {
+    if (!user) {
+      throw new ForbiddenException("Authentication required");
+    }
+    if (user.role === "super_admin") {
+      return;
+    }
+    if (!user.orgId || user.orgId !== requestOrgId) {
+      throw new ForbiddenException("Access denied for this organization");
+    }
+  }
+
   @Get()
-  findAll() {
-    return this.organizationsService.findAll();
+  @UseGuards(AuthGuard("jwt"), PermissionsGuard)
+  @Permissions("manage_organizations")
+  findAll(@Req() req: { user?: { orgId?: string; role?: string } }) {
+    if (req.user?.role === "super_admin") {
+      return this.organizationsService.findAll();
+    }
+    if (!req.user?.orgId) {
+      throw new ForbiddenException("Access denied for this organization");
+    }
+    return this.organizationsService.findAllForOrg(req.user.orgId);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
+  @UseGuards(AuthGuard("jwt"), PermissionsGuard)
+  @Permissions("manage_organizations")
+  findOne(
+    @Param("id") id: string,
+    @Req() req: { user?: { orgId?: string; role?: string } }
+  ) {
+    this.assertOrgScope(id, req.user);
     return this.organizationsService.findOne(id);
   }
 
@@ -62,6 +93,7 @@ export class OrganizationsController {
   @Permissions("manage_organizations")
   update(
     @Param("id") id: string,
+    @Req() req: { user?: { orgId?: string; role?: string } },
     @Body()
     body: Partial<{
       name: string;
@@ -76,6 +108,7 @@ export class OrganizationsController {
       planTier: "free" | "plus" | "pro";
     }>
   ) {
+    this.assertOrgScope(id, req.user);
     return this.organizationsService.update(id, {
       ...body
     });
@@ -84,7 +117,11 @@ export class OrganizationsController {
   @Delete(":id")
   @UseGuards(AuthGuard("jwt"), PermissionsGuard)
   @Permissions("manage_organizations")
-  remove(@Param("id") id: string) {
+  remove(
+    @Param("id") id: string,
+    @Req() req: { user?: { orgId?: string; role?: string } }
+  ) {
+    this.assertOrgScope(id, req.user);
     return this.organizationsService.remove(id);
   }
 }

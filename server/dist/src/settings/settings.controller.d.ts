@@ -2,7 +2,13 @@ import { SettingsService } from "./settings.service";
 export declare class SettingsController {
     private readonly settingsService;
     constructor(settingsService: SettingsService);
-    getSettings(orgId: string): Promise<{
+    private assertOrgScope;
+    getSettings(orgId: string, req: {
+        user?: {
+            orgId?: string;
+            role?: string;
+        };
+    }): Promise<{
         id: string;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
@@ -13,7 +19,12 @@ export declare class SettingsController {
         adminEmails: string[];
         planTier: import("@prisma/client").$Enums.PlanTier;
     } | null>;
-    updateSettings(orgId: string, body: Partial<{
+    updateSettings(orgId: string, req: {
+        user?: {
+            orgId?: string;
+            role?: string;
+        };
+    }, body: Partial<{
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];

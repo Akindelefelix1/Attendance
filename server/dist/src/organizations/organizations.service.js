@@ -23,6 +23,12 @@ let OrganizationsService = class OrganizationsService {
             include: { staff: true }
         });
     }
+    findAllForOrg(orgId) {
+        return this.prisma.organization.findMany({
+            where: { id: orgId },
+            include: { staff: true }
+        });
+    }
     findOne(id) {
         return this.prisma.organization.findUnique({
             where: { id },

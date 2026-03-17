@@ -17,6 +17,16 @@ let AttendanceService = class AttendanceService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async ensureStaffInOrganization(staffId, organizationId) {
+        const staff = await this.prisma.staffMember.findUnique({
+            where: { id: staffId },
+            select: { organizationId: true }
+        });
+        if (!staff || staff.organizationId !== organizationId) {
+            return false;
+        }
+        return true;
+    }
     listByOrganizationAndDate(organizationId, dateISO) {
         return this.prisma.attendanceRecord.findMany({
             where: { organizationId, dateISO },
@@ -30,6 +40,10 @@ let AttendanceService = class AttendanceService {
         });
     }
     async signIn(organizationId, staffId, dateISO) {
+        const isValidStaff = await this.ensureStaffInOrganization(staffId, organizationId);
+        if (!isValidStaff) {
+            return null;
+        }
         const existing = await this.prisma.attendanceRecord.findUnique({
             where: { staffId_dateISO: { staffId, dateISO } }
         });
@@ -47,6 +61,10 @@ let AttendanceService = class AttendanceService {
         });
     }
     async signOut(organizationId, staffId, dateISO) {
+        const isValidStaff = await this.ensureStaffInOrganization(staffId, organizationId);
+        if (!isValidStaff) {
+            return null;
+        }
         const existing = await this.prisma.attendanceRecord.findUnique({
             where: { staffId_dateISO: { staffId, dateISO } }
         });

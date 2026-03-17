@@ -2,22 +2,28 @@ import { OrganizationsService } from "./organizations.service";
 export declare class OrganizationsController {
     private readonly organizationsService;
     constructor(organizationsService: OrganizationsService);
-    findAll(): import("@prisma/client").Prisma.PrismaPromise<({
+    private assertOrgScope;
+    findAll(req: {
+        user?: {
+            orgId?: string;
+            role?: string;
+        };
+    }): import("@prisma/client").Prisma.PrismaPromise<({
         staff: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
@@ -34,22 +40,27 @@ export declare class OrganizationsController {
         createdAt: Date;
         updatedAt: Date;
     })[]>;
-    findOne(id: string): import("@prisma/client").Prisma.Prisma__OrganizationClient<({
+    findOne(id: string, req: {
+        user?: {
+            orgId?: string;
+            role?: string;
+        };
+    }): import("@prisma/client").Prisma.Prisma__OrganizationClient<({
         staff: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
@@ -92,7 +103,12 @@ export declare class OrganizationsController {
         createdAt: Date;
         updatedAt: Date;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
-    update(id: string, body: Partial<{
+    update(id: string, req: {
+        user?: {
+            orgId?: string;
+            role?: string;
+        };
+    }, body: Partial<{
         name: string;
         location: string;
         lateAfterTime: string;
@@ -118,7 +134,12 @@ export declare class OrganizationsController {
         createdAt: Date;
         updatedAt: Date;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
-    remove(id: string): import("@prisma/client").Prisma.Prisma__OrganizationClient<{
+    remove(id: string, req: {
+        user?: {
+            orgId?: string;
+            role?: string;
+        };
+    }): import("@prisma/client").Prisma.Prisma__OrganizationClient<{
         id: string;
         name: string;
         location: string;
