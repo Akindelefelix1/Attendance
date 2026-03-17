@@ -5,8 +5,6 @@ import App from "./App";
 import LandingPage from "./components/LandingPage";
 import "./styles.css";
 
-const LANDING_KEY = "attendance-landing-seen";
-
 type NavPage = "home" | "about" | "contact" | "faqs" | "plans" | "login" | "signup";
 
 type LandingRouteProps = {
@@ -15,7 +13,6 @@ type LandingRouteProps = {
 
 const LandingRoute = ({ page }: LandingRouteProps) => {
   const handleEnter = () => {
-    localStorage.setItem(LANDING_KEY, "true");
     window.location.assign("/app");
   };
 

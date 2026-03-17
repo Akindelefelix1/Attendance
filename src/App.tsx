@@ -1,17 +1,21 @@
 ﻿import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { AttendanceRecord, OrgSettings, StaffMember } from "./types";
+import type { AttendanceRecord, OrgSettings, Organization, StaffMember } from "./types";
 import {
-  addOrganization,
-  addStaffToOrg,
-  getAttendanceForDate,
-  loadState,
-  removeOrganization,
-  saveState,
+  addStaff,
+  createOrganization,
+  deleteOrganization,
+  getOrganization,
+  getMe,
+  listAttendanceForDate,
+  listOrganizations,
+  loginAdmin,
+  logoutAdmin,
+  signInStaff,
+  signOutStaff,
   updateOrganization,
-  updateOrgSettings,
-  upsertAttendance
-} from "./lib/storage";
+  updateSettings
+} from "./lib/api";
 import { formatDateLong, getTodayISO } from "./lib/time";
 import AttendanceTable from "./components/AttendanceTable";
 import OrgSelector from "./components/OrgSelector";
@@ -24,11 +28,6 @@ import ConfirmModal from "./components/ConfirmModal";
 import OrganizationsPage from "./components/OrganizationsPage";
 import AnalyticsPage from "./components/AnalyticsPage";
 
-const createStaffMember = (payload: Omit<StaffMember, "id">): StaffMember => {
-  const id = `staff-${Math.random().toString(36).slice(2, 9)}`;
-  return { id, ...payload };
-};
-
 type ViewMode = "admin" | "staff";
 
 type PendingAction = {
@@ -37,10 +36,6 @@ type PendingAction = {
   type: "sign-in" | "sign-out";
 } | null;
 
-const DEFAULT_ADMIN_EMAIL = "Akindelefelix1@gmail.com";
-const AUTH_KEY = "attendance-org-auth";
-const LANDING_KEY = "attendance-landing-seen";
-const SESSION_KEY = "attendance-session-org";
 
 const App = () => {
   const navigate = useNavigate();
@@ -49,14 +44,18 @@ const App = () => {
   const isAnalyticsPage = location.pathname === "/app/analytics";
   const isSettingsPage = location.pathname === "/app/settings";
   const isDashboardPage = location.pathname === "/app";
-  const [state, setState] = useState(loadState());
-  const sessionOrgId = localStorage.getItem(SESSION_KEY) ?? "";
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [attendanceForDate, setAttendanceForDate] = useState<AttendanceRecord[]>([]);
   const [selectedOrgId, setSelectedOrgId] = useState(
-    sessionOrgId || state.organizations[0]?.id || ""
+    ""
   );
-  const [viewerEmail, setViewerEmail] = useState("");
   const [staffEmail, setStaffEmail] = useState("");
   const [adminEmailInput, setAdminEmailInput] = useState("");
+  const [adminPasswordInput, setAdminPasswordInput] = useState("");
+  const [adminSession, setAdminSession] = useState<{
+    email: string;
+    orgId: string;
+  } | null>(null);
   const [showAdminGate, setShowAdminGate] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("staff");
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -74,28 +73,34 @@ const App = () => {
   const todayISO = getTodayISO();
   const [selectedDateISO, setSelectedDateISO] = useState(todayISO);
 
-  const visibleOrganizations = useMemo(() => {
-    if (sessionOrgId) {
-      return state.organizations.filter((org) => org.id === sessionOrgId);
-    }
-    return state.organizations;
-  }, [state.organizations, sessionOrgId]);
+  const visibleOrganizations = useMemo(() => organizations, [organizations]);
 
   const selectedOrg = useMemo(() => {
     return visibleOrganizations.find((org) => org.id === selectedOrgId) ?? null;
   }, [visibleOrganizations, selectedOrgId]);
 
   useEffect(() => {
-    const sessionId = localStorage.getItem(SESSION_KEY);
-    if (sessionId) {
-      const exists = state.organizations.some((org) => org.id === sessionId);
-      if (exists) {
-        setSelectedOrgId(sessionId);
-      } else {
-        localStorage.removeItem(SESSION_KEY);
+    const hydrateAuth = async () => {
+      try {
+        const result = await getMe();
+        if (result?.user?.email && result.user.orgId) {
+          setAdminSession({ email: result.user.email, orgId: result.user.orgId });
+          setSelectedOrgId(result.user.orgId);
+        }
+      } catch {
+        setAdminSession(null);
       }
+    };
+    void hydrateAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedOrgId) return;
+    const exists = organizations.some((org) => org.id === selectedOrgId);
+    if (!exists) {
+      setSelectedOrgId(organizations[0]?.id ?? "");
     }
-  }, [state.organizations]);
+  }, [organizations, selectedOrgId]);
 
   useEffect(() => {
     if (!selectedOrg) {
@@ -116,26 +121,37 @@ const App = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const attendanceForDate = useMemo(() => {
-    if (!selectedOrg) return [];
-    return getAttendanceForDate(state, selectedOrg.id, selectedDateISO);
-  }, [selectedOrg, state, selectedDateISO]);
-
-  const commitState = (nextState: typeof state) => {
-    setState(nextState);
-    saveState(nextState);
+  const refreshOrganizations = async () => {
+    const orgs = await listOrganizations();
+    setOrganizations(orgs);
+    if (!selectedOrgId && orgs.length > 0) {
+      setSelectedOrgId(orgs[0].id);
+    }
+    return orgs;
   };
 
-  const runWithBusy = (
+  useEffect(() => {
+    void refreshOrganizations();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedOrg) {
+      setAttendanceForDate([]);
+      return;
+    }
+    void listAttendanceForDate(selectedOrg.id, selectedDateISO).then(setAttendanceForDate);
+  }, [selectedOrg, selectedDateISO]);
+
+  const runWithBusy = async (
     id: string,
     label: string,
-    action: () => void,
+    action: () => Promise<void>,
     onDone?: () => void
   ) => {
     if (busyAction) return;
     setBusyAction({ id, label });
     try {
-      action();
+      await action();
     } finally {
       window.setTimeout(() => {
         setBusyAction(null);
@@ -144,92 +160,96 @@ const App = () => {
     }
   };
 
-  const handleAddOrganization = () => {
+  const handleAddOrganization = async () => {
     if (sessionOrgId) return;
     if (orgLimitReached) return;
     if (!newOrgName || !newOrgLocation) return;
-    runWithBusy("add-org", "Adding organization...", () => {
-      const nextState = addOrganization(state, {
+    await runWithBusy("add-org", "Adding organization...", async () => {
+      const org = await createOrganization({
         name: newOrgName.trim(),
         location: newOrgLocation.trim()
       });
-      commitState(nextState);
-      const lastOrg = nextState.organizations[nextState.organizations.length - 1];
-      if (lastOrg) {
-        setSelectedOrgId(lastOrg.id);
+      await refreshOrganizations();
+      if (org?.id) {
+        setSelectedOrgId(org.id);
       }
       setNewOrgName("");
       setNewOrgLocation("");
     });
   };
 
-  const handleUpdateOrganization = () => {
+  const handleUpdateOrganization = async () => {
     if (!selectedOrg) return;
-    runWithBusy("update-org", "Saving organization...", () => {
-      const nextState = updateOrganization(state, selectedOrg.id, {
+    await runWithBusy("update-org", "Saving organization...", async () => {
+      await updateOrganization(selectedOrg.id, {
         name: orgNameDraft.trim(),
         location: orgLocationDraft.trim()
       });
-      commitState(nextState);
+      await refreshOrganizations();
     });
   };
 
-  const handleDeleteOrganization = () => {
+  const handleDeleteOrganization = async () => {
     if (!selectedOrg) return;
     if (!window.confirm(`Remove ${selectedOrg.name}? This cannot be undone.`)) {
       return;
     }
-    runWithBusy("remove-org", "Removing organization...", () => {
-      const nextState = removeOrganization(state, selectedOrg.id);
-      commitState(nextState);
-      setSelectedOrgId(nextState.organizations[0]?.id ?? "");
+    await runWithBusy("remove-org", "Removing organization...", async () => {
+      await deleteOrganization(selectedOrg.id);
+      const orgs = await refreshOrganizations();
+      setSelectedOrgId(orgs[0]?.id ?? "");
     });
   };
 
-  const handleAddStaff = (payload: Omit<StaffMember, "id">) => {
+  const handleAddStaff = async (payload: Omit<StaffMember, "id">) => {
     if (!selectedOrg) return;
     if (staffLimitReached) return;
-    runWithBusy("add-staff", "Adding staff member...", () => {
-      const staff = createStaffMember(payload);
-      const nextState = addStaffToOrg(state, selectedOrg.id, staff);
-      commitState(nextState);
+    await runWithBusy("add-staff", "Adding staff member...", async () => {
+      await addStaff({
+        organizationId: selectedOrg.id,
+        fullName: payload.fullName,
+        role: payload.role,
+        email: payload.email
+      });
+      const refreshed = await getOrganization(selectedOrg.id);
+      setOrganizations((prev) =>
+        prev.map((org) => (org.id === refreshed.id ? refreshed : org))
+      );
     });
   };
 
-  const handleUpdateSettings = (settings: OrgSettings) => {
+  const handleUpdateSettings = async (settings: OrgSettings) => {
     if (!selectedOrg) return;
-    runWithBusy("update-settings", "Saving settings...", () => {
-      const nextState = updateOrgSettings(state, selectedOrg.id, settings);
-      commitState(nextState);
+    await runWithBusy("update-settings", "Saving settings...", async () => {
+      const updated = await updateSettings(selectedOrg.id, settings);
+      setOrganizations((prev) =>
+        prev.map((org) =>
+          org.id === selectedOrg.id ? { ...org, settings: updated } : org
+        )
+      );
     });
   };
 
-  const performSignIn = (staffId: string) => {
+  const performSignIn = async (staffId: string) => {
     if (!selectedOrg) return;
-    const existing = attendanceForDate.find((record) => record.staffId === staffId);
-    const signInAt = existing?.signInAt ?? new Date().toISOString();
-    const record: AttendanceRecord = {
+    await signInStaff({
+      organizationId: selectedOrg.id,
       staffId,
-      dateISO: selectedDateISO,
-      signInAt,
-      signOutAt: existing?.signOutAt
-    };
-    const nextState = upsertAttendance(state, selectedOrg.id, record);
-    commitState(nextState);
+      dateISO: selectedDateISO
+    });
+    const records = await listAttendanceForDate(selectedOrg.id, selectedDateISO);
+    setAttendanceForDate(records);
   };
 
-  const performSignOut = (staffId: string) => {
+  const performSignOut = async (staffId: string) => {
     if (!selectedOrg) return;
-    const existing = attendanceForDate.find((record) => record.staffId === staffId);
-    if (!existing?.signInAt) return;
-    const record: AttendanceRecord = {
+    await signOutStaff({
+      organizationId: selectedOrg.id,
       staffId,
-      dateISO: selectedDateISO,
-      signInAt: existing.signInAt,
-      signOutAt: new Date().toISOString()
-    };
-    const nextState = upsertAttendance(state, selectedOrg.id, record);
-    commitState(nextState);
+      dateISO: selectedDateISO
+    });
+    const records = await listAttendanceForDate(selectedOrg.id, selectedDateISO);
+    setAttendanceForDate(records);
   };
 
   const requestAction = (staffId: string, type: "sign-in" | "sign-out") => {
@@ -247,7 +267,7 @@ const App = () => {
     setPendingAction({ staffId, staffName: staff.fullName, type });
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (!pendingAction) return;
     const actionId =
       pendingAction.type === "sign-in"
@@ -255,51 +275,45 @@ const App = () => {
         : `sign-out-${pendingAction.staffId}`;
     const actionLabel =
       pendingAction.type === "sign-in" ? "Signing in..." : "Signing out...";
-    runWithBusy(actionId, actionLabel, () => {
-      if (pendingAction.type === "sign-in") {
-        performSignIn(pendingAction.staffId);
-      } else {
-        performSignOut(pendingAction.staffId);
-      }
-    }, () => setPendingAction(null));
+    await runWithBusy(
+      actionId,
+      actionLabel,
+      async () => {
+        if (pendingAction.type === "sign-in") {
+          await performSignIn(pendingAction.staffId);
+        } else {
+          await performSignOut(pendingAction.staffId);
+        }
+      },
+      () => setPendingAction(null)
+    );
   };
 
   const canEditToday = selectedDateISO === todayISO;
-  const adminEmail = (() => {
-    try {
-      const raw = localStorage.getItem(AUTH_KEY);
-      if (!raw) return DEFAULT_ADMIN_EMAIL;
-      const records = JSON.parse(raw) as Array<{ orgId: string; email: string }>;
-      const record = records.find((item) => item.orgId === sessionOrgId);
-      return record?.email ?? DEFAULT_ADMIN_EMAIL;
-    } catch {
-      return DEFAULT_ADMIN_EMAIL;
-    }
-  })();
-  const normalizedPrimaryAdmin = adminEmail.trim().toLowerCase();
-  const orgAdmins = selectedOrg?.settings.adminEmails ?? [];
-  const adminList = Array.from(
-    new Set(
-      [normalizedPrimaryAdmin, ...orgAdmins.map((email) => email.toLowerCase())].filter(
-        Boolean
-      )
-    )
-  );
-  const isAdmin = adminList.includes(viewerEmail.trim().toLowerCase());
+  const isAdmin = Boolean(adminSession);
+  const sessionOrgId = adminSession?.orgId ?? null;
   const effectiveViewMode: ViewMode = isAdmin ? viewMode : "staff";
-  const isAdminInputMatch =
-    adminList.includes(adminEmailInput.trim().toLowerCase());
 
   const handleSwitchToAdmin = () => {
     setShowAdminGate(true);
   };
 
-  const handleAdminAccess = () => {
-    const normalized = adminEmailInput.trim().toLowerCase();
-    if (normalized === adminEmail.toLowerCase()) {
-      setViewerEmail(adminEmailInput.trim());
+  const handleAdminAccess = async () => {
+    if (!adminEmailInput.trim() || !adminPasswordInput.trim()) {
+      return;
+    }
+    try {
+      const result = await loginAdmin({
+        email: adminEmailInput.trim(),
+        password: adminPasswordInput
+      });
+      setAdminSession({ email: result.admin.email, orgId: result.admin.orgId });
+      setSelectedOrgId(result.admin.orgId);
       setViewMode("admin");
       setShowAdminGate(false);
+      setAdminPasswordInput("");
+    } catch {
+      setAdminPasswordInput("");
     }
   };
 
@@ -311,50 +325,57 @@ const App = () => {
   const handleCloseAdminGate = () => {
     setShowAdminGate(false);
     setAdminEmailInput("");
+    setAdminPasswordInput("");
   };
 
   const handleOpenOnboard = () => setShowOnboardModal(true);
   const handleCloseOnboard = () => setShowOnboardModal(false);
 
   const handleBackToLanding = () => {
-    localStorage.removeItem(LANDING_KEY);
     navigate("/");
   };
 
   const handleRequestLogout = () => setShowLogoutConfirm(true);
   const handleCancelLogout = () => setShowLogoutConfirm(false);
-  const handleConfirmLogout = () => {
+  const handleConfirmLogout = async () => {
     setShowLogoutConfirm(false);
+    await logoutAdmin();
+    setAdminSession(null);
+    setViewMode("staff");
     handleBackToLanding();
   };
 
-  const handleAddOrgFromPage = (name: string, location: string) => {
+  const handleAddOrgFromPage = async (name: string, location: string) => {
     if (sessionOrgId) return;
     if (orgLimitReached) return;
-    runWithBusy("org-add", "Adding organization...", () => {
-      const nextState = addOrganization(state, { name, location });
-      commitState(nextState);
+    await runWithBusy("org-add", "Adding organization...", async () => {
+      await createOrganization({ name, location });
+      await refreshOrganizations();
     });
   };
 
-  const handleUpdateOrgFromPage = (orgId: string, name: string, location: string) => {
-    runWithBusy(`org-save-${orgId}`, "Saving organization...", () => {
-      const nextState = updateOrganization(state, orgId, { name, location });
-      commitState(nextState);
+  const handleUpdateOrgFromPage = async (
+    orgId: string,
+    name: string,
+    location: string
+  ) => {
+    await runWithBusy(`org-save-${orgId}`, "Saving organization...", async () => {
+      await updateOrganization(orgId, { name, location });
+      await refreshOrganizations();
     });
   };
 
-  const handleRemoveOrgFromPage = (orgId: string) => {
+  const handleRemoveOrgFromPage = async (orgId: string) => {
     if (sessionOrgId && orgId !== sessionOrgId) return;
-    const org = state.organizations.find((item) => item.id === orgId);
+    const org = organizations.find((item) => item.id === orgId);
     if (org && !window.confirm(`Remove ${org.name}? This cannot be undone.`)) {
       return;
     }
-    runWithBusy(`org-remove-${orgId}`, "Removing organization...", () => {
-      const nextState = removeOrganization(state, orgId);
-      commitState(nextState);
+    await runWithBusy(`org-remove-${orgId}`, "Removing organization...", async () => {
+      await deleteOrganization(orgId);
+      const orgs = await refreshOrganizations();
       if (selectedOrgId === orgId) {
-        setSelectedOrgId(nextState.organizations[0]?.id ?? "");
+        setSelectedOrgId(orgs[0]?.id ?? "");
       }
     });
   };
@@ -381,7 +402,7 @@ const App = () => {
   const orgPlanTier = selectedOrg?.settings.planTier ?? "free";
   const orgLimit =
     orgPlanTier === "pro" ? 10 : orgPlanTier === "plus" ? 3 : 1;
-  const orgCount = state.organizations.length;
+  const orgCount = organizations.length;
   const orgLimitReached = !sessionOrgId && orgCount >= orgLimit;
   const staffLimit = selectedOrg
     ? selectedOrg.settings.planTier === "pro"
@@ -535,12 +556,7 @@ const App = () => {
         </main>
       ) : isAnalyticsPage && effectiveViewMode === "admin" ? (
         <main className="layout full">
-          <AnalyticsPage
-            organization={selectedOrg}
-            attendanceRecords={
-              selectedOrg ? state.attendanceByOrg[selectedOrg.id] ?? [] : []
-            }
-          />
+          <AnalyticsPage organization={selectedOrg} />
         </main>
       ) : isSettingsPage && effectiveViewMode === "admin" ? (
         <main className="layout full">
@@ -697,7 +713,8 @@ const App = () => {
                   settings={selectedOrg.settings}
                   onUpdate={handleUpdateSettings}
                   isBusy={isBusy}
-                  primaryAdminEmail={adminEmail}
+                  primaryAdminEmail={adminSession?.email ?? ""}
+                  orgId={selectedOrg.id}
                 />
               ) : (
                 <div className="empty-state">
@@ -965,7 +982,7 @@ const App = () => {
             <div className="modal-header">
               <h3>Admin access</h3>
             </div>
-            <p className="muted">Enter the admin email to unlock settings.</p>
+            <p className="muted">Enter your admin credentials to unlock settings.</p>
             <div className="gate-row">
               <input
                 type="email"
@@ -973,16 +990,18 @@ const App = () => {
                 onChange={(event) => setAdminEmailInput(event.target.value)}
                 placeholder="Admin email"
               />
+              <input
+                type="password"
+                value={adminPasswordInput}
+                onChange={(event) => setAdminPasswordInput(event.target.value)}
+                placeholder="Password"
+              />
               <button className="btn solid" type="button" onClick={handleAdminAccess}>
                 Continue
               </button>
             </div>
-            {adminEmailInput ? (
-              <p className="muted">
-                {isAdminInputMatch
-                  ? "Email recognized. Continue to unlock admin view."
-                  : "Only the admin email can unlock this view."}
-              </p>
+            {adminEmailInput || adminPasswordInput ? (
+              <p className="muted">Use your admin credentials to continue.</p>
             ) : null}
             <div className="modal-actions">
               <button className="btn ghost" type="button" onClick={handleCloseAdminGate}>
@@ -1020,3 +1039,4 @@ const App = () => {
 };
 
 export default App;
+

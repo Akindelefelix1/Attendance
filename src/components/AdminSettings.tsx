@@ -1,10 +1,12 @@
 ﻿import { useState } from "react";
 import type { OrgSettings } from "../types";
+import { registerAdmin } from "../lib/api";
 
 type Props = {
   settings: OrgSettings;
   onUpdate: (next: OrgSettings) => void;
   primaryAdminEmail: string;
+  orgId: string;
   disabled?: boolean;
   isBusy?: boolean;
 };
@@ -13,6 +15,7 @@ const AdminSettings = ({
   settings,
   onUpdate,
   primaryAdminEmail,
+  orgId,
   disabled = false,
   isBusy = false
 }: Props) => {
@@ -21,6 +24,7 @@ const AdminSettings = ({
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const [roleDrafts, setRoleDrafts] = useState<Record<string, string>>({});
   const [adminInput, setAdminInput] = useState("");
+  const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const workingDays = settings.workingDays ?? [1, 2, 3, 4, 5];
   const adminLimit =
     settings.planTier === "pro" ? 10 : settings.planTier === "plus" ? 3 : 1;
@@ -79,18 +83,26 @@ const AdminSettings = ({
 
   const handleAddAdmin = () => {
     const trimmed = adminInput.trim().toLowerCase();
-    if (!trimmed) return;
+    if (!trimmed || !adminPasswordInput.trim()) return;
     if (trimmed === normalizedPrimary) {
       setAdminInput("");
+      setAdminPasswordInput("");
       return;
     }
     if (adminEmails.some((email) => email.toLowerCase() === trimmed)) {
       setAdminInput("");
+      setAdminPasswordInput("");
       return;
     }
     if (remainingAdmins <= 0) return;
-    onUpdate({ ...settings, adminEmails: [...adminEmails, trimmed] });
-    setAdminInput("");
+    registerAdmin({ orgId, email: trimmed, password: adminPasswordInput })
+      .then(() => {
+        onUpdate({ ...settings, adminEmails: [...adminEmails, trimmed] });
+      })
+      .finally(() => {
+        setAdminInput("");
+        setAdminPasswordInput("");
+      });
   };
 
   const handleRemoveAdmin = (emailToRemove: string) => {
@@ -145,6 +157,13 @@ const AdminSettings = ({
               value={adminInput}
               onChange={(event) => setAdminInput(event.target.value)}
               placeholder="admin@company.com"
+              disabled={disabled || isBusy || remainingAdmins <= 0}
+            />
+            <input
+              type="password"
+              value={adminPasswordInput}
+              onChange={(event) => setAdminPasswordInput(event.target.value)}
+              placeholder="Temporary password"
               disabled={disabled || isBusy || remainingAdmins <= 0}
             />
             <button

@@ -1,78 +1,14 @@
-import { useMemo, useState } from "react";
-import type { AttendanceRecord, Organization, StaffMember } from "../types";
-import { formatDateLong, getTodayISO, isEarlyCheckout, isLateCheckIn } from "../lib/time";
+import { useEffect, useState } from "react";
+import type { Organization, StaffMember } from "../types";
+import { formatDateLong } from "../lib/time";
+import { getAnalytics } from "../lib/api";
 
 type Props = {
   organization: Organization | null;
-  attendanceRecords: AttendanceRecord[];
 };
 
 type RangeKey = "week" | "month";
 type FilterKey = "all" | "late" | "early" | "absent";
-
-const getWeekStart = (date: Date) => {
-  const day = date.getDay();
-  const diff = (day + 6) % 7; // Monday start
-  const start = new Date(date);
-  start.setDate(date.getDate() - diff);
-  start.setHours(0, 0, 0, 0);
-  return start;
-};
-
-const getWeekRange = (today: Date, workingDays: number[], includeFuture: boolean) => {
-  const start = getWeekStart(today);
-  const dates: string[] = [];
-  for (let offset = 0; offset < 7; offset += 1) {
-    const next = new Date(start);
-    next.setDate(start.getDate() + offset);
-    if (!includeFuture && next > today) break;
-    dates.push(next.toISOString().slice(0, 10));
-  }
-  return dates.filter((day) => isWorkingDay(day, workingDays));
-};
-
-const getMonthRange = (
-  today: Date,
-  workingDays: number[],
-  includeFuture: boolean
-) => {
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const start = new Date(year, month, 1);
-  const totalDays = includeFuture
-    ? new Date(year, month + 1, 0).getDate()
-    : today.getDate();
-  const dates: string[] = [];
-  for (let day = 1; day <= totalDays; day += 1) {
-    const next = new Date(year, month, day);
-    dates.push(next.toISOString().slice(0, 10));
-  }
-  return dates.filter((day) => isWorkingDay(day, workingDays));
-};
-
-const getDateRange = (
-  range: RangeKey,
-  workingDays: number[],
-  includeFuture: boolean
-) => {
-  const today = new Date(getTodayISO());
-  return range === "week"
-    ? getWeekRange(today, workingDays, includeFuture)
-    : getMonthRange(today, workingDays, includeFuture);
-};
-
-const getRecordMap = (records: AttendanceRecord[]) => {
-  const map = new Map<string, AttendanceRecord>();
-  records.forEach((record) => {
-    map.set(`${record.staffId}-${record.dateISO}`, record);
-  });
-  return map;
-};
-
-const isWorkingDay = (dateISO: string, workingDays: number[]) => {
-  const day = new Date(dateISO).getDay();
-  return workingDays.includes(day);
-};
 
 const downloadCsv = (filename: string, content: string) => {
   const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
@@ -87,52 +23,47 @@ const downloadCsv = (filename: string, content: string) => {
   URL.revokeObjectURL(url);
 };
 
-const AnalyticsPage = ({ organization, attendanceRecords }: Props) => {
+const AnalyticsPage = ({ organization }: Props) => {
   const [range, setRange] = useState<RangeKey>("week");
   const [filter, setFilter] = useState<FilterKey>("all");
-  const workingDays = organization?.settings.workingDays ?? [1, 2, 3, 4, 5];
-  const includeFuture = organization?.settings.analyticsIncludeFutureDays ?? false;
-  const dateRange = useMemo(
-    () => getDateRange(range, workingDays, includeFuture),
-    [range, workingDays, includeFuture]
-  );
-  const recordMap = useMemo(() => getRecordMap(attendanceRecords), [attendanceRecords]);
-  const sortedRange = useMemo(() => [...dateRange].sort(), [dateRange]);
+  const [rows, setRows] = useState<
+    Array<{ staff: StaffMember; lateCount: number; earlyCount: number; absentCount: number }>
+  >([]);
+  const [totals, setTotals] = useState({ late: 0, early: 0, absent: 0 });
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const analytics = useMemo(() => {
-    if (!organization) return [];
-    return organization.staff.map((staff) => {
-      let lateCount = 0;
-      let earlyCount = 0;
-      let absentCount = 0;
-      sortedRange.forEach((dateISO) => {
-        const record = recordMap.get(`${staff.id}-${dateISO}`);
-        if (!record?.signInAt) {
-          absentCount += 1;
-          return;
-        }
-        if (isLateCheckIn(record.signInAt, organization.settings.lateAfterTime, dateISO)) {
-          lateCount += 1;
-        }
-        if (
-          record.signOutAt &&
-          isEarlyCheckout(
-            record.signOutAt,
-            organization.settings.earlyCheckoutBeforeTime,
-            dateISO
-          )
-        ) {
-          earlyCount += 1;
-        }
-      });
-      return { staff, lateCount, earlyCount, absentCount };
-    });
-  }, [organization, sortedRange, recordMap]);
+  useEffect(() => {
+    if (!organization) return;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const result = await getAnalytics({
+          orgId: organization.id,
+          range,
+          filter
+        });
+        setRows(result.rows);
+        setTotals(result.totals);
+        setRangeStart(result.rangeStart);
+        setRangeEnd(result.rangeEnd);
+      } catch {
+        setRows([]);
+        setTotals({ late: 0, early: 0, absent: 0 });
+        setRangeStart(null);
+        setRangeEnd(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    void load();
+  }, [organization, range, filter]);
 
   const handleExportCsv = () => {
-    if (!organization || analytics.length === 0) return;
+    if (!organization || rows.length === 0) return;
     const headers = ["Staff Name", "Email", "Role", "Late", "Early", "Absent"];
-    const rows = analytics.map((row) => [
+    const csvRows = rows.map((row) => [
       row.staff.fullName,
       row.staff.email,
       row.staff.role,
@@ -140,50 +71,25 @@ const AnalyticsPage = ({ organization, attendanceRecords }: Props) => {
       row.earlyCount,
       row.absentCount
     ]);
-    const csv = [headers, ...rows]
+    const csv = [headers, ...csvRows]
       .map((row) =>
         row
           .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
           .join(",")
       )
       .join("\n");
-    const startLabel = sortedRange[0] ?? getTodayISO();
-    const endLabel = sortedRange[sortedRange.length - 1] ?? getTodayISO();
+    const startLabel = rangeStart ?? "range";
+    const endLabel = rangeEnd ?? "range";
     const filename = `${organization.name
       .toLowerCase()
       .replace(/\s+/g, "-")}-analytics-${startLabel}-to-${endLabel}.csv`;
     downloadCsv(filename, csv);
   };
 
-  const filteredAnalytics = useMemo(() => {
-    switch (filter) {
-      case "late":
-        return analytics.filter((row) => row.lateCount > 0);
-      case "early":
-        return analytics.filter((row) => row.earlyCount > 0);
-      case "absent":
-        return analytics.filter((row) => row.absentCount > 0);
-      default:
-        return analytics;
-    }
-  }, [analytics, filter]);
-
-  const totals = useMemo(() => {
-    return analytics.reduce(
-      (acc, row) => {
-        acc.late += row.lateCount;
-        acc.early += row.earlyCount;
-        acc.absent += row.absentCount;
-        return acc;
-      },
-      { late: 0, early: 0, absent: 0 }
-    );
-  }, [analytics]);
-  const rangeLabel = sortedRange.length
-    ? `Highlights for ${formatDateLong(sortedRange[0])} to ${formatDateLong(
-        sortedRange[sortedRange.length - 1]
-      )}.`
-    : "No working days available for the selected range.";
+  const rangeLabel =
+    rangeStart && rangeEnd
+      ? `Highlights for ${formatDateLong(rangeStart)} to ${formatDateLong(rangeEnd)}.`
+      : "No working days available for the selected range.";
 
   if (!organization) {
     return (
@@ -289,13 +195,18 @@ const AnalyticsPage = ({ organization, attendanceRecords }: Props) => {
           <span>Early</span>
           <span>Absent</span>
         </div>
-        {filteredAnalytics.length === 0 ? (
+        {isLoading ? (
+          <div className="empty-state">
+            <h3>Loading analytics</h3>
+            <p className="muted">Fetching latest attendance highlights.</p>
+          </div>
+        ) : rows.length === 0 ? (
           <div className="empty-state">
             <h3>No results</h3>
             <p className="muted">No staff match this filter for the selected range.</p>
           </div>
         ) : (
-          filteredAnalytics.map((row) => (
+          rows.map((row) => (
             <div className="analytics-row" key={row.staff.id}>
               <div className="cell staff">
                 <div className="staff-cell">

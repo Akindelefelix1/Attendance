@@ -1,33 +1,10 @@
 ﻿import React, { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { addOrganization, loadState, saveState } from "../lib/storage";
-import type { Organization } from "../types";
+import { createOrganization, loginAdmin, registerAdmin } from "../lib/api";
 
 type Props = {
   onEnter: () => void;
   page: "home" | "about" | "contact" | "faqs" | "plans" | "login" | "signup";
-};
-
-type AuthRecord = {
-  orgId: string;
-  email: string;
-  password: string;
-};
-
-const AUTH_KEY = "attendance-org-auth";
-const SESSION_KEY = "attendance-session-org";
-
-const loadAuth = (): AuthRecord[] => {
-  try {
-    const raw = localStorage.getItem(AUTH_KEY);
-    return raw ? (JSON.parse(raw) as AuthRecord[]) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveAuth = (records: AuthRecord[]) => {
-  localStorage.setItem(AUTH_KEY, JSON.stringify(records));
 };
 
 const LandingPage = ({ onEnter, page }: Props) => {
@@ -44,58 +21,50 @@ const [authError, setAuthError] = useState("");
   ];
   const [heroIndex, setHeroIndex] = useState(0);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     setAuthError("");
     if (!signupOrgName || !signupLocation || !signupEmail || !signupPassword) {
       setAuthError("Please fill all fields.");
       return;
     }
-    const existing = loadAuth().some(
-      (record) => record.email.toLowerCase() === signupEmail.toLowerCase()
-    );
-    if (existing) {
-      setAuthError("An account with this email already exists.");
-      return;
-    }
-
-    const state = loadState();
-    const nextState = addOrganization(state, {
-      name: signupOrgName.trim(),
-      location: signupLocation.trim()
-    });
-    saveState(nextState);
-    const lastOrg = nextState.organizations[nextState.organizations.length - 1];
-    if (!lastOrg) {
+    let createdOrg;
+    try {
+      createdOrg = await createOrganization({
+        name: signupOrgName.trim(),
+        location: signupLocation.trim()
+      });
+    } catch (error) {
       setAuthError("Could not create organization.");
       return;
     }
-
-    const records = loadAuth();
-    records.push({
-      orgId: lastOrg.id,
-      email: signupEmail.trim().toLowerCase(),
-      password: signupPassword
-    });
-    saveAuth(records);
-    localStorage.setItem(SESSION_KEY, lastOrg.id);
+    try {
+      await registerAdmin({
+        orgId: createdOrg.id,
+        email: signupEmail.trim().toLowerCase(),
+        password: signupPassword
+      });
+    } catch (error) {
+      setAuthError("Could not create admin account.");
+      return;
+    }
     onEnter();
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setAuthError("");
     if (!loginEmail || !loginPassword) {
       setAuthError("Enter your email and password.");
       return;
     }
-    const record = loadAuth().find(
-      (item) => item.email.toLowerCase() === loginEmail.toLowerCase()
-    );
-    if (!record || record.password !== loginPassword) {
+    try {
+      await loginAdmin({
+        email: loginEmail.trim().toLowerCase(),
+        password: loginPassword
+      });
+      onEnter();
+    } catch {
       setAuthError("Invalid email or password.");
-      return;
     }
-    localStorage.setItem(SESSION_KEY, record.orgId);
-    onEnter();
   };
 
   const authPageTitle = useMemo(() => {

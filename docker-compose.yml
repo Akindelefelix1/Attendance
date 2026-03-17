@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: attendance
+      POSTGRES_PASSWORD: attendance
+      POSTGRES_DB: attendance
+    ports:
+      - "5432:5432"
+    volumes:
+      - attendance_db:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      JWT_SECRET: dev-secret
+      DATABASE_URL: postgresql://attendance:attendance@db:5432/attendance
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+volumes:
+  attendance_db:

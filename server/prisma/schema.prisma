@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlanTier {
+  free
+  plus
+  pro
+}
+
+enum AttendanceEditPolicy {
+  any
+  self_only
+}
+
+enum AppRole {
+  admin
+  staff
+}
+
+enum Permission {
+  manage_organizations
+  manage_staff
+  manage_attendance
+  view_analytics
+  manage_settings
+}
+
+model Organization {
+  id                         String                @id @default(cuid())
+  name                       String
+  location                   String
+  lateAfterTime              String                @default("09:00")
+  earlyCheckoutBeforeTime    String                @default("17:00")
+  roles                      String[]
+  workingDays                Int[]
+  analyticsIncludeFutureDays Boolean               @default(false)
+  attendanceEditPolicy       AttendanceEditPolicy  @default(any)
+  adminEmails                String[]
+  planTier                   PlanTier              @default(free)
+  staff                      StaffMember[]
+  attendanceRecords          AttendanceRecord[]
+  admins                     AdminUser[]
+  createdAt                  DateTime              @default(now())
+  updatedAt                  DateTime              @updatedAt
+}
+
+model StaffMember {
+  id             String             @id @default(cuid())
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  fullName       String
+  role           String
+  email          String
+  passwordHash   String?
+  isVerified     Boolean            @default(false)
+  verifyToken    String?
+  resetToken     String?
+  resetTokenExp  DateTime?
+  appRole        AppRole            @default(staff)
+  permissions    Permission[]
+  attendance     AttendanceRecord[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([organizationId])
+  @@unique([organizationId, email])
+}
+
+model AttendanceRecord {
+  id             String        @id @default(cuid())
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  staff          StaffMember   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  staffId        String
+  dateISO        String
+  signInAt       DateTime?
+  signOutAt      DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId, dateISO])
+  @@unique([staffId, dateISO])
+}
+
+model AdminUser {
+  id             String        @id @default(cuid())
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  email          String
+  passwordHash   String
+  appRole        AppRole       @default(admin)
+  permissions    Permission[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([organizationId, email])
+}
