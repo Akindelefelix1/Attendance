@@ -8,39 +8,39 @@ export declare class AttendanceService {
         createdAt: Date;
         updatedAt: Date;
         organizationId: string;
+        staffId: string;
         dateISO: string;
         signInAt: Date | null;
         signOutAt: Date | null;
-        staffId: string;
     }[]>;
     listByOrganization(organizationId: string): import("@prisma/client").Prisma.PrismaPromise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         organizationId: string;
+        staffId: string;
         dateISO: string;
         signInAt: Date | null;
         signOutAt: Date | null;
-        staffId: string;
     }[]>;
     signIn(organizationId: string, staffId: string, dateISO: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         organizationId: string;
+        staffId: string;
         dateISO: string;
         signInAt: Date | null;
         signOutAt: Date | null;
-        staffId: string;
     } | null>;
     signOut(organizationId: string, staffId: string, dateISO: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         organizationId: string;
+        staffId: string;
         dateISO: string;
         signInAt: Date | null;
         signOutAt: Date | null;
-        staffId: string;
     } | null>;
 }

@@ -12,6 +12,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnalyticsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const toLocalDateISO = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+const getLocalDayFromISO = (dateISO) => {
+    const [year, month, day] = dateISO.split("-").map(Number);
+    return new Date(year, month - 1, day).getDay();
+};
 const getWeekStart = (date) => {
     const day = date.getDay();
     const diff = (day + 6) % 7;
@@ -21,7 +31,7 @@ const getWeekStart = (date) => {
     return start;
 };
 const isWorkingDay = (dateISO, workingDays) => {
-    const day = new Date(dateISO).getDay();
+    const day = getLocalDayFromISO(dateISO);
     return workingDays.includes(day);
 };
 const getWeekRange = (today, workingDays, includeFuture) => {
@@ -32,7 +42,7 @@ const getWeekRange = (today, workingDays, includeFuture) => {
         next.setDate(start.getDate() + offset);
         if (!includeFuture && next > today)
             break;
-        dates.push(next.toISOString().slice(0, 10));
+        dates.push(toLocalDateISO(next));
     }
     return dates.filter((day) => isWorkingDay(day, workingDays));
 };
@@ -45,7 +55,7 @@ const getMonthRange = (today, workingDays, includeFuture) => {
     const dates = [];
     for (let day = 1; day <= totalDays; day += 1) {
         const next = new Date(year, month, day);
-        dates.push(next.toISOString().slice(0, 10));
+        dates.push(toLocalDateISO(next));
     }
     return dates.filter((day) => isWorkingDay(day, workingDays));
 };

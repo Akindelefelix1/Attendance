@@ -4,6 +4,18 @@ import { PrismaService } from "../prisma/prisma.service";
 type RangeKey = "week" | "month";
 type FilterKey = "all" | "late" | "early" | "absent";
 
+const toLocalDateISO = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDayFromISO = (dateISO: string) => {
+  const [year, month, day] = dateISO.split("-").map(Number);
+  return new Date(year, month - 1, day).getDay();
+};
+
 const getWeekStart = (date: Date) => {
   const day = date.getDay();
   const diff = (day + 6) % 7;
@@ -14,7 +26,7 @@ const getWeekStart = (date: Date) => {
 };
 
 const isWorkingDay = (dateISO: string, workingDays: number[]) => {
-  const day = new Date(dateISO).getDay();
+  const day = getLocalDayFromISO(dateISO);
   return workingDays.includes(day);
 };
 
@@ -25,7 +37,7 @@ const getWeekRange = (today: Date, workingDays: number[], includeFuture: boolean
     const next = new Date(start);
     next.setDate(start.getDate() + offset);
     if (!includeFuture && next > today) break;
-    dates.push(next.toISOString().slice(0, 10));
+    dates.push(toLocalDateISO(next));
   }
   return dates.filter((day) => isWorkingDay(day, workingDays));
 };
@@ -43,7 +55,7 @@ const getMonthRange = (
   const dates: string[] = [];
   for (let day = 1; day <= totalDays; day += 1) {
     const next = new Date(year, month, day);
-    dates.push(next.toISOString().slice(0, 10));
+    dates.push(toLocalDateISO(next));
   }
   return dates.filter((day) => isWorkingDay(day, workingDays));
 };

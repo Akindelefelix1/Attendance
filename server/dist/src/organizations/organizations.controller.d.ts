@@ -13,17 +13,17 @@ export declare class OrganizationsController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
@@ -50,17 +50,17 @@ export declare class OrganizationsController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
