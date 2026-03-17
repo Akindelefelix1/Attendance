@@ -13,7 +13,7 @@ type LandingRouteProps = {
 
 const LandingRoute = ({ page }: LandingRouteProps) => {
   const handleEnter = () => {
-    window.location.assign("/app");
+    window.location.assign("/login");
   };
 
   return <LandingPage page={page} onEnter={handleEnter} />;

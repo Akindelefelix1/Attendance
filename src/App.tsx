@@ -86,13 +86,16 @@ const App = () => {
         if (result?.user?.email && result.user.orgId) {
           setAdminSession({ email: result.user.email, orgId: result.user.orgId });
           setSelectedOrgId(result.user.orgId);
+          return;
         }
+        navigate("/login", { replace: true });
       } catch {
         setAdminSession(null);
+        navigate("/login", { replace: true });
       }
     };
     void hydrateAuth();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (!selectedOrgId) return;

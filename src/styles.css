@@ -18,6 +18,27 @@
   box-sizing: border-box;
 }
 
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gentleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 body {
   margin: 0;
   font-family: "Space Grotesk", sans-serif;
@@ -75,6 +96,7 @@ select {
   border: 1px solid var(--border);
   backdrop-filter: blur(8px);
   margin-bottom: 2.5rem;
+  animation: fadeUp 0.45s ease both;
 }
 
 .brand {
@@ -141,6 +163,7 @@ select {
   display: grid;
   gap: 1rem;
   box-shadow: 0 18px 45px rgba(26, 26, 26, 0.08);
+  animation: fadeUp 0.5s ease both;
 }
 
 .auth-form {
@@ -187,6 +210,7 @@ select {
   gap: 2.5rem;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   align-items: center;
+  animation: fadeUp 0.6s ease both;
 }
 
 .landing-hero-visual {
@@ -220,6 +244,7 @@ select {
 .hero-phone.primary {
   transform: rotate(-2deg);
   z-index: 2;
+  animation: gentleFloat 5s ease-in-out infinite;
 }
 
 .hero-phone-layer {
@@ -315,6 +340,13 @@ select {
   display: grid;
   gap: 1rem;
   box-shadow: 0 25px 60px rgba(26, 26, 26, 0.12);
+  animation: fadeUp 0.7s ease both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-hero-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 70px rgba(26, 26, 26, 0.16);
 }
 
 .landing-card-label {
@@ -347,6 +379,7 @@ select {
 
 .landing-section {
   margin-bottom: 3rem;
+  animation: fadeUp 0.55s ease both;
 }
 
 .landing-section-header {
@@ -366,6 +399,12 @@ select {
   padding: 1.5rem;
   display: grid;
   gap: 0.75rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 35px rgba(26, 26, 26, 0.12);
 }
 
 .landing-card-icon {
@@ -436,6 +475,7 @@ select {
   border: 1px solid var(--border);
   background: var(--panel);
   padding: 1.25rem;
+  animation: fadeUp 0.5s ease both;
 }
 
 .about-page .info-hero {
@@ -474,6 +514,7 @@ select {
   padding: 1.25rem;
   display: grid;
   gap: 0.5rem;
+  animation: fadeUp 0.5s ease both;
 }
 
 .faq-list {
@@ -486,6 +527,7 @@ select {
   border: 1px solid var(--border);
   background: var(--panel);
   padding: 1.25rem;
+  animation: fadeUp 0.5s ease both;
 }
 
 .plans {
@@ -562,6 +604,25 @@ select {
   gap: 2rem;
   background: #ffe0c2;
   border-radius: 24px;
+  animation: fadeUp 0.6s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-nav,
+  .auth-card,
+  .landing-hero-panel,
+  .landing-hero-card,
+  .landing-section,
+  .landing-card,
+  .info-card,
+  .contact-card,
+  .faq-item,
+  .site-footer,
+  .hero-phone.primary {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }
 
 .footer-brand {

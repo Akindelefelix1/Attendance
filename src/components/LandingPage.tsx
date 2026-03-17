@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect } from "react";
+﻿import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createOrganization, loginAdmin, registerAdmin } from "../lib/api";
 
@@ -15,55 +15,57 @@ const LandingPage = ({ onEnter, page }: Props) => {
   const [signupPassword, setSignupPassword] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-const [authError, setAuthError] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authBusy, setAuthBusy] = useState<"login" | "signup" | null>(null);
   const heroImages = [
     "https://res.cloudinary.com/doxxevnyt/image/upload/v1773662233/8b9bce25-da3f-4c63-a9c4-6c543a15e1f1_yteu7o.png"
   ];
   const [heroIndex, setHeroIndex] = useState(0);
 
   const handleSignup = async () => {
+    if (authBusy) return;
     setAuthError("");
     if (!signupOrgName || !signupLocation || !signupEmail || !signupPassword) {
       setAuthError("Please fill all fields.");
       return;
     }
-    let createdOrg;
+    setAuthBusy("signup");
     try {
-      createdOrg = await createOrganization({
+      const createdOrg = await createOrganization({
         name: signupOrgName.trim(),
         location: signupLocation.trim()
       });
-    } catch (error) {
-      setAuthError("Could not create organization.");
-      return;
-    }
-    try {
       await registerAdmin({
         orgId: createdOrg.id,
         email: signupEmail.trim().toLowerCase(),
         password: signupPassword
       });
-    } catch (error) {
-      setAuthError("Could not create admin account.");
-      return;
+      navigate("/app");
+    } catch {
+      setAuthError("Could not create account. Please try again.");
+    } finally {
+      setAuthBusy(null);
     }
-    onEnter();
   };
 
   const handleLogin = async () => {
+    if (authBusy) return;
     setAuthError("");
     if (!loginEmail || !loginPassword) {
       setAuthError("Enter your email and password.");
       return;
     }
+    setAuthBusy("login");
     try {
       await loginAdmin({
         email: loginEmail.trim().toLowerCase(),
         password: loginPassword
       });
-      onEnter();
+      navigate("/app");
     } catch {
       setAuthError("Invalid email or password.");
+    } finally {
+      setAuthBusy(null);
     }
   };
 
@@ -72,6 +74,8 @@ const [authError, setAuthError] = useState("");
     if (page === "signup") return "Create organization";
     return "";
 }, [page]);
+
+  const isBusy = authBusy !== null;
 
   useEffect(() => {
     if (page !== "home" || heroImages.length <= 1) return;
@@ -145,6 +149,7 @@ const [authError, setAuthError] = useState("");
                     type="email"
                     value={loginEmail}
                     onChange={(event) => setLoginEmail(event.target.value)}
+                    disabled={isBusy}
                   />
                 </label>
                 <label>
@@ -153,12 +158,23 @@ const [authError, setAuthError] = useState("");
                     type="password"
                     value={loginPassword}
                     onChange={(event) => setLoginPassword(event.target.value)}
+                    disabled={isBusy}
                   />
                 </label>
-                <button className="btn solid" type="button" onClick={handleLogin}>
-                  Log in
+                <button
+                  className="btn solid"
+                  type="button"
+                  onClick={handleLogin}
+                  disabled={isBusy}
+                >
+                  {authBusy === "login" ? "Logging in..." : "Log in"}
                 </button>
-                <button className="btn ghost" type="button" onClick={() => navigate("/signup")}>
+                <button
+                  className="btn ghost"
+                  type="button"
+                  onClick={() => navigate("/signup")}
+                  disabled={isBusy}
+                >
                   Create new organization
                 </button>
               </div>
@@ -170,6 +186,7 @@ const [authError, setAuthError] = useState("");
                     type="text"
                     value={signupOrgName}
                     onChange={(event) => setSignupOrgName(event.target.value)}
+                    disabled={isBusy}
                   />
                 </label>
                 <label>
@@ -178,6 +195,7 @@ const [authError, setAuthError] = useState("");
                     type="text"
                     value={signupLocation}
                     onChange={(event) => setSignupLocation(event.target.value)}
+                    disabled={isBusy}
                   />
                 </label>
                 <label>
@@ -186,6 +204,7 @@ const [authError, setAuthError] = useState("");
                     type="email"
                     value={signupEmail}
                     onChange={(event) => setSignupEmail(event.target.value)}
+                    disabled={isBusy}
                   />
                 </label>
                 <label>
@@ -194,12 +213,23 @@ const [authError, setAuthError] = useState("");
                     type="password"
                     value={signupPassword}
                     onChange={(event) => setSignupPassword(event.target.value)}
+                    disabled={isBusy}
                   />
                 </label>
-                <button className="btn solid" type="button" onClick={handleSignup}>
-                  Create organization
+                <button
+                  className="btn solid"
+                  type="button"
+                  onClick={handleSignup}
+                  disabled={isBusy}
+                >
+                  {authBusy === "signup" ? "Creating account..." : "Create organization"}
                 </button>
-                <button className="btn ghost" type="button" onClick={() => navigate("/login")}>
+                <button
+                  className="btn ghost"
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  disabled={isBusy}
+                >
                   Already have an account
                 </button>
               </div>
