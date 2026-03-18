@@ -142,6 +142,7 @@ const AdminSettings = ({
       (position) => {
         onUpdate({
           ...settings,
+          officeGeoFenceEnabled: true,
           officeLatitude: Number(position.coords.latitude.toFixed(6)),
           officeLongitude: Number(position.coords.longitude.toFixed(6))
         });
