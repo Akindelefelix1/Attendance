@@ -1400,12 +1400,38 @@ input {
   margin-bottom: 0.25rem;
 }
 
+.settings-summary {
+  display: grid;
+  gap: 0.25rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings-summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-summary::after {
+  content: "▾";
+  justify-self: end;
+  color: var(--muted);
+  margin-top: -2rem;
+}
+
+.settings-block:not([open]) .settings-summary::after {
+  content: "▸";
+}
+
 .role-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.role-header + .role-input {
+  margin-top: 0.4rem;
 }
 
 .workdays-grid {

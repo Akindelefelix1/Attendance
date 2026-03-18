@@ -131,11 +131,11 @@ const AdminSettings = ({
 
   return (
     <section className="admin-settings">
-      <div className="role-settings settings-block">
-        <div className="panel-header">
+      <details className="role-settings settings-block" open>
+        <summary className="settings-summary">
           <h3>Plan tier</h3>
           <p className="muted">Controls admin limits and advanced capabilities.</p>
-        </div>
+        </summary>
         <label>
           Current plan
           <select
@@ -157,15 +157,15 @@ const AdminSettings = ({
             <option value="pro">Pro</option>
           </select>
         </label>
-      </div>
+      </details>
 
-      <div className="role-settings settings-block">
-        <div className="panel-header">
+      <details className="role-settings settings-block">
+        <summary className="settings-summary">
           <h3>Admins</h3>
           <p className="muted">
             {totalAdmins} of {adminLimit} admin slots used.
           </p>
-        </div>
+        </summary>
         <label>
           Add admin email
           <div className="role-input">
@@ -218,15 +218,15 @@ const AdminSettings = ({
             <p className="muted">No additional admins yet.</p>
           ) : null}
         </div>
-      </div>
+      </details>
 
-      <div className="role-settings settings-block">
-        <div className="panel-header">
+      <details className="role-settings settings-block">
+        <summary className="settings-summary">
           <h3>Staff login password</h3>
           <p className="muted">
             Set one password that all staff in this organization use to log in.
           </p>
-        </div>
+        </summary>
         <label>
           Shared staff password
           <div className="role-input">
@@ -252,13 +252,13 @@ const AdminSettings = ({
             </button>
           </div>
         </label>
-      </div>
+      </details>
 
-      <div className="role-settings settings-block">
-        <div className="panel-header">
+      <details className="role-settings settings-block">
+        <summary className="settings-summary">
           <h3>Attendance rules</h3>
           <p className="muted">Late and early checkout thresholds are set here.</p>
-        </div>
+        </summary>
         <label>
           Late if check-in after
           <input
@@ -281,15 +281,15 @@ const AdminSettings = ({
             disabled={disabled || isBusy}
           />
         </label>
-      </div>
+      </details>
 
-      <div className="role-settings settings-block">
-        <div className="panel-header">
+      <details className="role-settings settings-block">
+        <summary className="settings-summary">
           <h3>Office geofence</h3>
           <p className="muted">
             Require staff to be physically in office before sign in/out is allowed.
           </p>
-        </div>
+        </summary>
         <label className="toggle-pill">
           <input
             type="checkbox"
@@ -357,15 +357,15 @@ const AdminSettings = ({
             />
           </label>
         </div>
-      </div>
+      </details>
 
-      <div className="role-settings settings-block">
-        <div className="panel-header">
+      <details className="role-settings settings-block">
+        <summary className="settings-summary">
           <h3>Sign-in permissions</h3>
           <p className="muted">
             Control whether staff can sign in/out for others or only themselves.
           </p>
-        </div>
+        </summary>
         <label className="toggle-pill">
           <input
             type="radio"
@@ -390,13 +390,13 @@ const AdminSettings = ({
           />
           <span>Only the logged-in email can sign in/out for itself</span>
         </label>
-      </div>
+      </details>
 
-      <div className="role-settings settings-block">
-        <div className="panel-header">
+      <details className="role-settings settings-block">
+        <summary className="settings-summary">
           <h3>Working days</h3>
           <p className="muted">Choose which days count toward attendance analytics.</p>
-        </div>
+        </summary>
         <div className="workdays-grid">
           {[
             { label: "Mon", value: 1 },
@@ -432,14 +432,14 @@ const AdminSettings = ({
           />
           <span>Include future working days in analytics</span>
         </label>
-      </div>
+      </details>
 
-      <div className="role-settings settings-block">
+      <details className="role-settings settings-block">
+        <summary className="settings-summary">
+          <h3>Roles</h3>
+          <p className="muted">Create organization roles used during onboarding.</p>
+        </summary>
         <div className="role-header">
-          <div className="panel-header">
-            <h3>Roles</h3>
-            <p className="muted">Create organization roles used during onboarding.</p>
-          </div>
           <button
             className="btn ghost"
             type="button"
@@ -526,7 +526,7 @@ const AdminSettings = ({
             <p className="muted">No roles yet. Add the first role above.</p>
           ) : null}
         </div>
-      </div>
+      </details>
     </section>
   );
 };
