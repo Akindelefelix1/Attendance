@@ -126,6 +126,17 @@ export const updateSettings = async (
   return mapOrganization(updated).settings;
 };
 
+export const setOrganizationStaffPassword = (payload: {
+  orgId: string;
+  password: string;
+}) =>
+  request(`/settings/${payload.orgId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      staffLoginPassword: payload.password
+    })
+  });
+
 export const listStaff = (organizationId: string) =>
   request<StaffMember[]>(`/staff/organization/${organizationId}`);
 

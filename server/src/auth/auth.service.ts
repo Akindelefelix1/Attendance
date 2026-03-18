@@ -128,28 +128,58 @@ export class AuthService {
   }
 
   async staffLogin(email: string, password: string, res: Response) {
-    const staff = await this.prisma.staffMember.findFirst({
-      where: { email: email.trim().toLowerCase() }
+    const staffCandidates = await this.prisma.staffMember.findMany({
+      where: { email: email.trim().toLowerCase() },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            staffLoginPasswordHash: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
     });
-    if (!staff?.passwordHash) {
+
+    if (staffCandidates.length === 0) {
       throw new UnauthorizedException("Invalid credentials");
     }
-    if (!staff.isVerified) {
-      throw new UnauthorizedException("Email not verified");
+
+    let matchedStaff: (typeof staffCandidates)[number] | null = null;
+    for (const candidate of staffCandidates) {
+      const orgPasswordHash = candidate.organization.staffLoginPasswordHash;
+      if (!orgPasswordHash) {
+        continue;
+      }
+      const ok = await bcrypt.compare(password, orgPasswordHash);
+      if (ok) {
+        matchedStaff = candidate;
+        break;
+      }
     }
-    const ok = await bcrypt.compare(password, staff.passwordHash);
-    if (!ok) {
+
+    if (!matchedStaff) {
       throw new UnauthorizedException("Invalid credentials");
     }
+
     const token = this.jwtService.sign({
-      sub: staff.id,
-      orgId: staff.organizationId,
-      email: staff.email,
+      sub: matchedStaff.id,
+      orgId: matchedStaff.organizationId,
+      email: matchedStaff.email,
       role: "staff",
-      permissions: staff.permissions.length ? staff.permissions : STAFF_PERMISSIONS
+      permissions:
+        matchedStaff.permissions.length
+          ? matchedStaff.permissions
+          : STAFF_PERMISSIONS
     });
     this.setCookie(res, token);
-    return { staff: { id: staff.id, email: staff.email, orgId: staff.organizationId } };
+    return {
+      staff: {
+        id: matchedStaff.id,
+        email: matchedStaff.email,
+        orgId: matchedStaff.organizationId
+      }
+    };
   }
 
   async requestStaffVerify(email: string) {

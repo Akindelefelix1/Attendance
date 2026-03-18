@@ -39,6 +39,7 @@ model Organization {
   id                         String                @id @default(cuid())
   name                       String
   location                   String
+  staffLoginPasswordHash     String?
   lateAfterTime              String                @default("09:00")
   earlyCheckoutBeforeTime    String                @default("17:00")
   roles                      String[]

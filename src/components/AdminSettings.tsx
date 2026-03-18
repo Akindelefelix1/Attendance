@@ -1,6 +1,6 @@
 ﻿import { useState } from "react";
 import type { OrgSettings } from "../types";
-import { registerAdmin } from "../lib/api";
+import { registerAdmin, setOrganizationStaffPassword } from "../lib/api";
 
 type Props = {
   settings: OrgSettings;
@@ -25,6 +25,8 @@ const AdminSettings = ({
   const [roleDrafts, setRoleDrafts] = useState<Record<string, string>>({});
   const [adminInput, setAdminInput] = useState("");
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
+  const [staffLoginPasswordInput, setStaffLoginPasswordInput] = useState("");
+  const [staffLoginSaving, setStaffLoginSaving] = useState(false);
   const workingDays = settings.workingDays ?? [1, 2, 3, 4, 5];
   const adminLimit =
     settings.planTier === "pro" ? 10 : settings.planTier === "plus" ? 3 : 1;
@@ -110,6 +112,19 @@ const AdminSettings = ({
       ...settings,
       adminEmails: adminEmails.filter((email) => email !== emailToRemove)
     });
+  };
+
+  const handleSaveStaffLoginPassword = () => {
+    const trimmed = staffLoginPasswordInput.trim();
+    if (!trimmed || staffLoginSaving) return;
+    setStaffLoginSaving(true);
+    setOrganizationStaffPassword({ orgId, password: trimmed })
+      .then(() => {
+        setStaffLoginPasswordInput("");
+      })
+      .finally(() => {
+        setStaffLoginSaving(false);
+      });
   };
 
   return (
@@ -201,6 +216,40 @@ const AdminSettings = ({
             <p className="muted">No additional admins yet.</p>
           ) : null}
         </div>
+      </div>
+
+      <div className="role-settings">
+        <div className="panel-header">
+          <h3>Staff login password</h3>
+          <p className="muted">
+            Set one password that all staff in this organization use to log in.
+          </p>
+        </div>
+        <label>
+          Shared staff password
+          <div className="role-input">
+            <input
+              type="password"
+              value={staffLoginPasswordInput}
+              onChange={(event) => setStaffLoginPasswordInput(event.target.value)}
+              placeholder="Enter shared password"
+              disabled={disabled || isBusy || staffLoginSaving}
+            />
+            <button
+              className="btn solid"
+              type="button"
+              onClick={handleSaveStaffLoginPassword}
+              disabled={
+                disabled ||
+                isBusy ||
+                staffLoginSaving ||
+                !staffLoginPasswordInput.trim()
+              }
+            >
+              {staffLoginSaving ? "Saving..." : "Save password"}
+            </button>
+          </div>
+        </label>
       </div>
 
       <div className="panel-header">

@@ -1059,6 +1059,16 @@ input {
   gap: 0.4rem;
 }
 
+.summary-org-info .pill-row {
+  margin-top: 0.35rem;
+  align-items: center;
+}
+
+.summary-org-info .pill {
+  display: inline-flex;
+  align-items: center;
+}
+
 .summary-org-info .btn {
   justify-self: start;
 }

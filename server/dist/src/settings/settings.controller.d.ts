@@ -33,10 +33,12 @@ export declare class SettingsController {
         attendanceEditPolicy: "any" | "self_only";
         adminEmails: string[];
         planTier: "free" | "plus" | "pro";
-    }>): import("@prisma/client").Prisma.Prisma__OrganizationClient<{
+        staffLoginPassword: string;
+    }>): Promise<{
         id: string;
         name: string;
         location: string;
+        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -47,5 +49,5 @@ export declare class SettingsController {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }>;
 }

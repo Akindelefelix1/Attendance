@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createOrganization, loginAdmin, registerAdmin } from "../lib/api";
+import { createOrganization, loginAdmin, loginStaff, registerAdmin } from "../lib/api";
 
 type Props = {
   onEnter: () => void;
@@ -15,6 +15,7 @@ const LandingPage = ({ onEnter, page }: Props) => {
   const [signupPassword, setSignupPassword] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginMode, setLoginMode] = useState<"admin" | "staff">("admin");
   const [authError, setAuthError] = useState("");
   const [authBusy, setAuthBusy] = useState<"login" | "signup" | null>(null);
   const heroImages = [
@@ -57,13 +58,24 @@ const LandingPage = ({ onEnter, page }: Props) => {
     }
     setAuthBusy("login");
     try {
-      await loginAdmin({
-        email: loginEmail.trim().toLowerCase(),
-        password: loginPassword
-      });
+      if (loginMode === "staff") {
+        await loginStaff({
+          email: loginEmail.trim().toLowerCase(),
+          password: loginPassword
+        });
+      } else {
+        await loginAdmin({
+          email: loginEmail.trim().toLowerCase(),
+          password: loginPassword
+        });
+      }
       navigate("/app");
     } catch {
-      setAuthError("Invalid email or password.");
+      setAuthError(
+        loginMode === "staff"
+          ? "Invalid staff email or password."
+          : "Invalid admin email or password."
+      );
     } finally {
       setAuthBusy(null);
     }
@@ -144,6 +156,19 @@ const LandingPage = ({ onEnter, page }: Props) => {
             {page === "login" ? (
               <div className="auth-form">
                 <label>
+                  Login as
+                  <select
+                    value={loginMode}
+                    onChange={(event) =>
+                      setLoginMode(event.target.value as "admin" | "staff")
+                    }
+                    disabled={isBusy}
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                  </select>
+                </label>
+                <label>
                   Email
                   <input
                     type="email"
@@ -161,13 +186,18 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     disabled={isBusy}
                   />
                 </label>
+                {loginMode === "staff" ? (
+                  <p className="muted">
+                    Use your organization staff email and the shared staff password set by admin.
+                  </p>
+                ) : null}
                 <button
                   className="btn solid"
                   type="button"
                   onClick={handleLogin}
                   disabled={isBusy}
                 >
-                  {authBusy === "login" ? "Logging in..." : "Log in"}
+                  {authBusy === "login" ? "Logging in..." : `Log in as ${loginMode}`}
                 </button>
                 <button
                   className="btn ghost"

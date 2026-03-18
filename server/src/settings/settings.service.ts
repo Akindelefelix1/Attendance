@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import * as bcrypt from "bcryptjs";
 
 @Injectable()
 export class SettingsService {
@@ -22,7 +23,7 @@ export class SettingsService {
     });
   }
 
-  updateSettings(
+  async updateSettings(
     organizationId: string,
     data: Partial<{
       lateAfterTime: string;
@@ -33,11 +34,34 @@ export class SettingsService {
       attendanceEditPolicy: "any" | "self_only";
       adminEmails: string[];
       planTier: "free" | "plus" | "pro";
+      staffLoginPassword: string;
     }>
   ) {
+    const { staffLoginPassword, ...rest } = data;
+    const updateData: {
+      lateAfterTime?: string;
+      earlyCheckoutBeforeTime?: string;
+      roles?: string[];
+      workingDays?: number[];
+      analyticsIncludeFutureDays?: boolean;
+      attendanceEditPolicy?: "any" | "self_only";
+      adminEmails?: string[];
+      planTier?: "free" | "plus" | "pro";
+      staffLoginPasswordHash?: string;
+    } = {
+      ...rest
+    };
+
+    if (typeof staffLoginPassword === "string") {
+      const trimmed = staffLoginPassword.trim();
+      if (trimmed.length > 0) {
+        updateData.staffLoginPasswordHash = await bcrypt.hash(trimmed, 10);
+      }
+    }
+
     return this.prisma.organization.update({
       where: { id: organizationId },
-      data
+      data: updateData
     });
   }
 }

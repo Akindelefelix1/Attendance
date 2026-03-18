@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import * as crypto from "crypto";
 
 @Injectable()
 export class StaffService {
@@ -19,8 +18,9 @@ export class StaffService {
         organization: { connect: { id: organizationId } },
         fullName: payload.fullName,
         role: payload.role,
-        email: payload.email,
-        verifyToken: crypto.randomUUID(),
+        email: payload.email.trim().toLowerCase(),
+        isVerified: true,
+        verifyToken: null,
         permissions: ["manage_attendance"]
       }
     });

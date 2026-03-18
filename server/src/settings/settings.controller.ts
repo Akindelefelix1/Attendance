@@ -59,6 +59,7 @@ export class SettingsController {
       attendanceEditPolicy: "any" | "self_only";
       adminEmails: string[];
       planTier: "free" | "plus" | "pro";
+      staffLoginPassword: string;
     }>
   ) {
     this.assertOrgScope(orgId, req.user);

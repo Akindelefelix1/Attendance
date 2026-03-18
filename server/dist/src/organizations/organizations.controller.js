@@ -75,8 +75,7 @@ let OrganizationsController = class OrganizationsController {
 exports.OrganizationsController = OrganizationsController;
 __decorate([
     (0, common_1.Get)(),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
-    (0, permissions_decorator_1.Permissions)("manage_organizations"),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt")),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -84,8 +83,7 @@ __decorate([
 ], OrganizationsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(":id"),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt"), permissions_guard_1.PermissionsGuard),
-    (0, permissions_decorator_1.Permissions)("manage_organizations"),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt")),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),

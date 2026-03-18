@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect } from "react";
+﻿import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { AttendanceRecord, OrgSettings, Organization, StaffMember } from "./types";
 import {
@@ -56,6 +56,8 @@ const App = () => {
     email: string;
     orgId: string;
   } | null>(null);
+  const [staffSessionOrgId, setStaffSessionOrgId] = useState<string | null>(null);
+  const [sessionRole, setSessionRole] = useState<"admin" | "staff" | null>(null);
   const [showAdminGate, setShowAdminGate] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("staff");
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -84,13 +86,27 @@ const App = () => {
       try {
         const result = await getMe();
         if (result?.user?.email && result.user.orgId) {
-          setAdminSession({ email: result.user.email, orgId: result.user.orgId });
+          if (result.user.role === "admin") {
+            setAdminSession({ email: result.user.email, orgId: result.user.orgId });
+            setStaffSessionOrgId(null);
+            setSessionRole("admin");
+          } else {
+            setAdminSession(null);
+            setStaffSessionOrgId(result.user.orgId);
+            setSessionRole("staff");
+            setStaffEmail(result.user.email);
+          }
           setSelectedOrgId(result.user.orgId);
           return;
         }
+        setAdminSession(null);
+        setStaffSessionOrgId(null);
+        setSessionRole(null);
         navigate("/login", { replace: true });
       } catch {
         setAdminSession(null);
+        setStaffSessionOrgId(null);
+        setSessionRole(null);
         navigate("/login", { replace: true });
       }
     };
@@ -98,12 +114,23 @@ const App = () => {
   }, [navigate]);
 
   useEffect(() => {
+    if (sessionRole !== "staff" || !staffSessionOrgId) return;
+    if (selectedOrgId !== staffSessionOrgId) {
+      setSelectedOrgId(staffSessionOrgId);
+    }
+  }, [sessionRole, selectedOrgId, staffSessionOrgId]);
+
+  useEffect(() => {
     if (!selectedOrgId) return;
     const exists = organizations.some((org) => org.id === selectedOrgId);
     if (!exists) {
-      setSelectedOrgId(organizations[0]?.id ?? "");
+      if (sessionRole === "staff" && staffSessionOrgId) {
+        setSelectedOrgId(staffSessionOrgId);
+      } else {
+        setSelectedOrgId(organizations[0]?.id ?? "");
+      }
     }
-  }, [organizations, selectedOrgId]);
+  }, [organizations, selectedOrgId, sessionRole, staffSessionOrgId]);
 
   useEffect(() => {
     if (!selectedOrg) {
@@ -260,6 +287,12 @@ const App = () => {
     if (selectedDateISO !== todayISO) return;
     const staff = selectedOrg.staff.find((person) => person.id === staffId);
     if (!staff) return;
+    if (isStaffSession) {
+      const loggedInStaffEmail = staffEmail.trim().toLowerCase();
+      if (!loggedInStaffEmail || loggedInStaffEmail !== staff.email.toLowerCase()) {
+        return;
+      }
+    }
     if (
       !isAdmin &&
       selectedOrg.settings.attendanceEditPolicy === "self-only" &&
@@ -293,7 +326,8 @@ const App = () => {
   };
 
   const canEditToday = selectedDateISO === todayISO;
-  const isAdmin = Boolean(adminSession);
+  const isAdmin = sessionRole === "admin";
+  const isStaffSession = sessionRole === "staff";
   const sessionOrgId = adminSession?.orgId ?? null;
   const effectiveViewMode: ViewMode = isAdmin ? viewMode : "staff";
 
@@ -311,6 +345,7 @@ const App = () => {
         password: adminPasswordInput
       });
       setAdminSession({ email: result.admin.email, orgId: result.admin.orgId });
+      setSessionRole("admin");
       setSelectedOrgId(result.admin.orgId);
       setViewMode("admin");
       setShowAdminGate(false);
@@ -335,7 +370,7 @@ const App = () => {
   const handleCloseOnboard = () => setShowOnboardModal(false);
 
   const handleBackToLanding = () => {
-    navigate("/");
+    navigate("/login", { replace: true });
   };
 
   const handleRequestLogout = () => setShowLogoutConfirm(true);
@@ -344,6 +379,8 @@ const App = () => {
     setShowLogoutConfirm(false);
     await logoutAdmin();
     setAdminSession(null);
+    setStaffSessionOrgId(null);
+    setSessionRole(null);
     setViewMode("staff");
     handleBackToLanding();
   };
@@ -397,6 +434,9 @@ const App = () => {
   const isBusy = Boolean(busyAction);
   const canEditStaffMember = (staff: StaffMember) => {
     if (!selectedOrg) return false;
+    if (isStaffSession) {
+      return staffEmail.trim().toLowerCase() === staff.email.toLowerCase();
+    }
     if (isAdmin) return true;
     const policy = selectedOrg.settings.attendanceEditPolicy ?? "any";
     if (policy === "any") return true;
@@ -415,7 +455,9 @@ const App = () => {
         : 20
     : 0;
   const staffLimitReached =
-    Boolean(selectedOrg) && staffLimit !== Infinity && selectedOrg.staff.length >= staffLimit;
+    Boolean(selectedOrg) &&
+    staffLimit !== Infinity &&
+    (selectedOrg?.staff.length ?? 0) >= staffLimit;
 
   return (
     <div className="app-shell with-fixed-nav">
@@ -469,7 +511,7 @@ const App = () => {
               </span>
               Switch to staff
             </button>
-          ) : (
+          ) : sessionRole === "admin" ? (
             <button className="nav-pill accent" type="button" onClick={handleSwitchToAdmin}>
               <span className="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" role="presentation">
@@ -484,7 +526,7 @@ const App = () => {
               </span>
               Switch to admin
             </button>
-          )}
+          ) : null}
           {effectiveViewMode === "admin" ? (
             <button
               className={`nav-pill ${isOrganizationsPage ? "active" : ""}`}
@@ -539,6 +581,23 @@ const App = () => {
                 </svg>
               </span>
               {isSettingsPage ? "Back to dashboard" : "Settings"}
+            </button>
+          ) : null}
+          {isStaffSession ? (
+            <button className="nav-pill" type="button" onClick={handleRequestLogout}>
+              <span className="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path
+                    d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 17l5-5-5-5M19 12H9"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              Log out
             </button>
           ) : null}
         </div>
@@ -813,13 +872,15 @@ const App = () => {
                         <span className="muted">
                           Create your organization to start tracking attendance.
                         </span>
-                        <button
-                          className="btn solid"
-                          type="button"
-                          onClick={() => navigate("/signup")}
-                        >
-                          Create organization
-                        </button>
+                        {!isStaffSession ? (
+                          <button
+                            className="btn solid"
+                            type="button"
+                            onClick={() => navigate("/signup")}
+                          >
+                            Create organization
+                          </button>
+                        ) : null}
                       </div>
                     )}
                     <button
@@ -886,11 +947,13 @@ const App = () => {
                     variant="card"
                   />
                   <div className="summary-card summary-org">
-                    <OrgSelector
-                      organizations={visibleOrganizations}
-                      selectedOrgId={selectedOrgId}
-                      onSelect={setSelectedOrgId}
-                    />
+                    {!isStaffSession ? (
+                      <OrgSelector
+                        organizations={visibleOrganizations}
+                        selectedOrgId={selectedOrgId}
+                        onSelect={setSelectedOrgId}
+                      />
+                    ) : null}
                     {selectedOrg ? (
                       <div className="summary-org-info">
                         <strong>{selectedOrg.name}</strong>
@@ -908,13 +971,15 @@ const App = () => {
                         <span className="muted">
                           Create your organization to start tracking attendance.
                         </span>
-                        <button
-                          className="btn solid"
-                          type="button"
-                          onClick={() => navigate("/signup")}
-                        >
-                          Create organization
-                        </button>
+                        {!isStaffSession ? (
+                          <button
+                            className="btn solid"
+                            type="button"
+                            onClick={() => navigate("/signup")}
+                          >
+                            Create organization
+                          </button>
+                        ) : null}
                       </div>
                     )}
                   </div>

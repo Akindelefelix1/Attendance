@@ -35,8 +35,7 @@ export class OrganizationsController {
   }
 
   @Get()
-  @UseGuards(AuthGuard("jwt"), PermissionsGuard)
-  @Permissions("manage_organizations")
+  @UseGuards(AuthGuard("jwt"))
   findAll(@Req() req: { user?: { orgId?: string; role?: string } }) {
     if (req.user?.role === "super_admin") {
       return this.organizationsService.findAll();
@@ -48,8 +47,7 @@ export class OrganizationsController {
   }
 
   @Get(":id")
-  @UseGuards(AuthGuard("jwt"), PermissionsGuard)
-  @Permissions("manage_organizations")
+  @UseGuards(AuthGuard("jwt"))
   findOne(
     @Param("id") id: string,
     @Req() req: { user?: { orgId?: string; role?: string } }

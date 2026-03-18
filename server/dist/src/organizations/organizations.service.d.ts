@@ -24,6 +24,7 @@ export declare class OrganizationsService {
         id: string;
         name: string;
         location: string;
+        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -56,6 +57,7 @@ export declare class OrganizationsService {
         id: string;
         name: string;
         location: string;
+        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -88,6 +90,7 @@ export declare class OrganizationsService {
         id: string;
         name: string;
         location: string;
+        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -103,6 +106,7 @@ export declare class OrganizationsService {
         id: string;
         name: string;
         location: string;
+        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -118,6 +122,7 @@ export declare class OrganizationsService {
         id: string;
         name: string;
         location: string;
+        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -133,6 +138,7 @@ export declare class OrganizationsService {
         id: string;
         name: string;
         location: string;
+        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];

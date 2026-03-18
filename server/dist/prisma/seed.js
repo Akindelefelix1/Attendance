@@ -43,10 +43,12 @@ const main = async () => {
     if (orgCount > 0) {
         return;
     }
+    const staffPasswordHash = await bcrypt.hash("staff123", 10);
     const organization = await prisma.organization.create({
         data: {
             name: "Valetax Labs",
             location: "Lagos",
+            staffLoginPasswordHash: staffPasswordHash,
             roles: ["Operations", "HR", "Finance"],
             workingDays: [1, 2, 3, 4, 5],
             planTier: "plus",
@@ -72,7 +74,6 @@ const main = async () => {
         where: { id: organization.id },
         data: { adminEmails: [admin.email] }
     });
-    const staffPasswordHash = await bcrypt.hash("staff123", 10);
     await prisma.staffMember.createMany({
         data: [
             {
