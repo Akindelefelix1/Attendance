@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import type { Organization, StaffMember } from "../types";
+import type {
+  GeoPolicyCompliance,
+  Organization,
+  PunctualityTrend,
+  ReliabilityStaffRow,
+  RoleInsight,
+  StaffMember
+} from "../types";
 import { formatDateLong } from "../lib/time";
 import { getAnalytics } from "../lib/api";
 
@@ -9,6 +16,21 @@ type Props = {
 
 type RangeKey = "week" | "month";
 type FilterKey = "all" | "late" | "early" | "absent";
+
+const toPercentLabel = (value: number) => `${value.toFixed(1)}%`;
+
+const emptyGeoCompliance: GeoPolicyCompliance = {
+  geoFenceEnabled: false,
+  geoFenceConfigured: false,
+  officeRadiusMeters: null,
+  attendanceEditPolicy: "any",
+  analyticsIncludeFutureDays: false,
+  expectedCheckIns: 0,
+  actualCheckIns: 0,
+  missingCheckIns: 0,
+  policyBreachEvents: 0,
+  complianceRate: 0
+};
 
 const downloadCsv = (filename: string, content: string) => {
   const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
@@ -30,6 +52,18 @@ const AnalyticsPage = ({ organization }: Props) => {
     Array<{ staff: StaffMember; lateCount: number; earlyCount: number; absentCount: number }>
   >([]);
   const [totals, setTotals] = useState({ late: 0, early: 0, absent: 0 });
+  const [punctualityTrends, setPunctualityTrends] = useState<PunctualityTrend[]>([]);
+  const [reliabilityStaff, setReliabilityStaff] = useState<ReliabilityStaffRow[]>([]);
+  const [reliabilitySummary, setReliabilitySummary] = useState({
+    expectedDays: 0,
+    averageAttendanceRate: 0,
+    averagePunctualityRate: 0,
+    averageLateMinutes: 0,
+    averageEarlyCheckoutMinutes: 0
+  });
+  const [roleInsights, setRoleInsights] = useState<RoleInsight[]>([]);
+  const [geoPolicyCompliance, setGeoPolicyCompliance] =
+    useState<GeoPolicyCompliance>(emptyGeoCompliance);
   const [rangeStart, setRangeStart] = useState<string | null>(null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,11 +80,33 @@ const AnalyticsPage = ({ organization }: Props) => {
         });
         setRows(result.rows);
         setTotals(result.totals);
+        setPunctualityTrends(result.punctualityTrends);
+        setReliabilitySummary({
+          expectedDays: result.reliability.expectedDays,
+          averageAttendanceRate: result.reliability.averageAttendanceRate,
+          averagePunctualityRate: result.reliability.averagePunctualityRate,
+          averageLateMinutes: result.reliability.averageLateMinutes,
+          averageEarlyCheckoutMinutes: result.reliability.averageEarlyCheckoutMinutes
+        });
+        setReliabilityStaff(result.reliability.staff);
+        setRoleInsights(result.roleInsights);
+        setGeoPolicyCompliance(result.geoPolicyCompliance);
         setRangeStart(result.rangeStart);
         setRangeEnd(result.rangeEnd);
       } catch {
         setRows([]);
         setTotals({ late: 0, early: 0, absent: 0 });
+        setPunctualityTrends([]);
+        setReliabilitySummary({
+          expectedDays: 0,
+          averageAttendanceRate: 0,
+          averagePunctualityRate: 0,
+          averageLateMinutes: 0,
+          averageEarlyCheckoutMinutes: 0
+        });
+        setReliabilityStaff([]);
+        setRoleInsights([]);
+        setGeoPolicyCompliance(emptyGeoCompliance);
         setRangeStart(null);
         setRangeEnd(null);
       } finally {
@@ -232,6 +288,200 @@ const AnalyticsPage = ({ organization }: Props) => {
             </div>
           ))
         )}
+      </div>
+
+      <div className="analytics-section">
+        <div className="section-header-row">
+          <h3>Punctuality trends</h3>
+          <span className="muted">Daily trendline for on-time behavior</span>
+        </div>
+        <div className="trend-grid">
+          {punctualityTrends.length === 0 ? (
+            <div className="empty-state compact">
+              <p className="muted">No punctuality trend data available for this range.</p>
+            </div>
+          ) : (
+            punctualityTrends.map((trend) => (
+              <article key={trend.dateISO} className="trend-card">
+                <strong>{formatDateLong(trend.dateISO)}</strong>
+                <div className="trend-card-grid">
+                  <span>On-time: {trend.onTime}</span>
+                  <span>Late: {trend.late}</span>
+                  <span>Early out: {trend.earlyCheckout}</span>
+                  <span>Absent: {trend.absent}</span>
+                </div>
+                <div className="trend-badges">
+                  <span className="metric-pill neutral">
+                    Attendance {toPercentLabel(trend.attendanceRate)}
+                  </span>
+                  <span className="metric-pill sea">
+                    Punctuality {toPercentLabel(trend.punctualityRate)}
+                  </span>
+                </div>
+                <p className="muted trend-meta">
+                  Avg late {trend.avgLateMinutes}m • Avg early-out {trend.avgEarlyCheckoutMinutes}m
+                </p>
+              </article>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="analytics-section">
+        <div className="section-header-row">
+          <h3>Attendance reliability</h3>
+          <span className="muted">Consistency and streak-based reliability signals</span>
+        </div>
+        <div className="analytics-stats">
+          <div className="stat-card">
+            <span className="stat-label">Expected days / staff</span>
+            <strong className="stat-value">{reliabilitySummary.expectedDays}</strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Avg attendance rate</span>
+            <strong className="stat-value">
+              {toPercentLabel(reliabilitySummary.averageAttendanceRate)}
+            </strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Avg punctuality rate</span>
+            <strong className="stat-value">
+              {toPercentLabel(reliabilitySummary.averagePunctualityRate)}
+            </strong>
+          </div>
+        </div>
+        <div className="analytics-table compact-table">
+          <div className="analytics-head reliability-head">
+            <span>Staff</span>
+            <span>Attendance</span>
+            <span>Punctuality</span>
+            <span>Best streak</span>
+            <span>Absence streak</span>
+            <span>Breaches</span>
+          </div>
+          {reliabilityStaff.map((row) => (
+            <div className="analytics-row reliability-row" key={row.staff.id}>
+              <div className="cell staff">
+                <div className="staff-cell">
+                  <span className="avatar">{row.staff.fullName[0]}</span>
+                  <div>
+                    <strong>{row.staff.fullName}</strong>
+                    <span className="muted">{row.staff.email}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="cell" data-label="Attendance">
+                {toPercentLabel(row.attendanceRate)}
+              </div>
+              <div className="cell" data-label="Punctuality">
+                {toPercentLabel(row.punctualityRate)}
+              </div>
+              <div className="cell" data-label="Best streak">
+                {row.maxAttendanceStreak}
+              </div>
+              <div className="cell" data-label="Absence streak">
+                {row.maxAbsenceStreak}
+              </div>
+              <div className="cell" data-label="Breaches">
+                <span className="metric-pill absent">{row.policyBreaches}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="analytics-section">
+        <div className="section-header-row">
+          <h3>Team/Role insights</h3>
+          <span className="muted">Role-level reliability and policy trend comparisons</span>
+        </div>
+        <div className="analytics-table compact-table">
+          <div className="analytics-head role-head">
+            <span>Role</span>
+            <span>Team size</span>
+            <span>Attendance</span>
+            <span>Punctuality</span>
+            <span>Breaches</span>
+          </div>
+          {roleInsights.length === 0 ? (
+            <div className="empty-state compact">
+              <p className="muted">No role data available.</p>
+            </div>
+          ) : (
+            roleInsights.map((role) => (
+              <div className="analytics-row role-row" key={role.role}>
+                <div className="cell" data-label="Role">
+                  <strong>{role.role}</strong>
+                </div>
+                <div className="cell" data-label="Team size">
+                  {role.staffCount}
+                </div>
+                <div className="cell" data-label="Attendance">
+                  {toPercentLabel(role.attendanceRate)}
+                </div>
+                <div className="cell" data-label="Punctuality">
+                  {toPercentLabel(role.punctualityRate)}
+                </div>
+                <div className="cell" data-label="Breaches">
+                  <span className="metric-pill absent">{role.policyBreaches}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="analytics-section">
+        <div className="section-header-row">
+          <h3>Geo/Policy compliance</h3>
+          <span className="muted">Configuration readiness and attendance policy adherence</span>
+        </div>
+        <div className="analytics-stats">
+          <div className="stat-card">
+            <span className="stat-label">Compliance rate</span>
+            <strong className="stat-value">
+              {toPercentLabel(geoPolicyCompliance.complianceRate)}
+            </strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Geo-fence</span>
+            <strong className="stat-value">
+              {geoPolicyCompliance.geoFenceEnabled
+                ? geoPolicyCompliance.geoFenceConfigured
+                  ? "Enabled"
+                  : "Needs setup"
+                : "Disabled"}
+            </strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Attendance edit policy</span>
+            <strong className="stat-value">
+              {geoPolicyCompliance.attendanceEditPolicy === "self_only"
+                ? "Self only"
+                : "Any"}
+            </strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Policy breach events</span>
+            <strong className="stat-value">{geoPolicyCompliance.policyBreachEvents}</strong>
+          </div>
+        </div>
+        <div className="compliance-meta">
+          <span className="metric-pill neutral">
+            Check-ins {geoPolicyCompliance.actualCheckIns}/{geoPolicyCompliance.expectedCheckIns}
+          </span>
+          <span className="metric-pill early">
+            Missing check-ins {geoPolicyCompliance.missingCheckIns}
+          </span>
+          <span className="metric-pill sea">
+            Future days in analytics {geoPolicyCompliance.analyticsIncludeFutureDays ? "On" : "Off"}
+          </span>
+          {geoPolicyCompliance.officeRadiusMeters !== null ? (
+            <span className="metric-pill neutral">
+              Geo radius {geoPolicyCompliance.officeRadiusMeters}m
+            </span>
+          ) : null}
+        </div>
       </div>
     </section>
   );

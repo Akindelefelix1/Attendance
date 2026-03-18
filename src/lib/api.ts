@@ -1,4 +1,10 @@
-import type { AttendanceRecord, OrgSettings, Organization, StaffMember } from "../types";
+import type {
+  AnalyticsResponse,
+  AttendanceRecord,
+  OrgSettings,
+  Organization,
+  StaffMember
+} from "../types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
@@ -265,16 +271,6 @@ export const getAnalytics = (payload: {
   range: "week" | "month";
   filter: "all" | "late" | "early" | "absent";
 }) =>
-  request<{
-    rangeStart: string | null;
-    rangeEnd: string | null;
-    rows: Array<{
-      staff: StaffMember;
-      lateCount: number;
-      earlyCount: number;
-      absentCount: number;
-    }>;
-    totals: { late: number; early: number; absent: number };
-  }>(
+  request<AnalyticsResponse>(
     `/analytics?orgId=${encodeURIComponent(payload.orgId)}&range=${payload.range}&filter=${payload.filter}`
   );

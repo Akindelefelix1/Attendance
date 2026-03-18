@@ -1258,6 +1258,67 @@ input {
   gap: 0.75rem;
 }
 
+.analytics-section {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.section-header-row {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.trend-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.trend-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fffdf9;
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.trend-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.trend-badges {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.trend-meta {
+  margin: 0;
+}
+
+.compact-table .analytics-row,
+.compact-table .analytics-head {
+  grid-template-columns: 2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.9fr;
+}
+
+.role-head,
+.role-row {
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+}
+
+.compliance-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .analytics-head,
 .analytics-row {
   display: grid;
@@ -1310,6 +1371,18 @@ input {
   background: #f0f4ff;
   border-color: #b8c9f2;
   color: #344d9b;
+}
+
+.metric-pill.neutral {
+  background: #f4f4f4;
+  border-color: #dbdbdb;
+  color: #2d2d2d;
+}
+
+.metric-pill.sea {
+  background: var(--sea-soft);
+  border-color: #b6dce7;
+  color: #194d63;
 }
 
 .org-add {
@@ -1715,6 +1788,10 @@ input {
   border: 1px dashed var(--border);
   border-radius: 16px;
   color: var(--muted);
+}
+
+.empty-state.compact {
+  padding: 1.1rem 0.9rem;
 }
 
 .cta-card {

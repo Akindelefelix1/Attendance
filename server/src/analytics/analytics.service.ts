@@ -93,6 +93,29 @@ const isEarlyCheckout = (
   return signOutAt.getTime() < earlyCutoff.getTime();
 };
 
+const toPercent = (numerator: number, denominator: number) => {
+  if (!denominator) return 0;
+  return Math.round((numerator / denominator) * 1000) / 10;
+};
+
+const getMinutesLate = (signInAt: Date | null, lateAfterTime: string, dateISO: string) => {
+  if (!signInAt || !lateAfterTime || !dateISO) return 0;
+  const lateAfter = combineDateAndTime(dateISO, lateAfterTime);
+  if (signInAt.getTime() <= lateAfter.getTime()) return 0;
+  return Math.round((signInAt.getTime() - lateAfter.getTime()) / 60000);
+};
+
+const getMinutesEarly = (
+  signOutAt: Date | null,
+  earlyCheckoutBeforeTime: string,
+  dateISO: string
+) => {
+  if (!signOutAt || !earlyCheckoutBeforeTime || !dateISO) return 0;
+  const earlyCutoff = combineDateAndTime(dateISO, earlyCheckoutBeforeTime);
+  if (signOutAt.getTime() >= earlyCutoff.getTime()) return 0;
+  return Math.round((earlyCutoff.getTime() - signOutAt.getTime()) / 60000);
+};
+
 @Injectable()
 export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -107,7 +130,29 @@ export class AnalyticsService {
         rangeStart: null,
         rangeEnd: null,
         rows: [],
-        totals: { late: 0, early: 0, absent: 0 }
+        totals: { late: 0, early: 0, absent: 0 },
+        punctualityTrends: [],
+        reliability: {
+          expectedDays: 0,
+          averageAttendanceRate: 0,
+          averagePunctualityRate: 0,
+          averageLateMinutes: 0,
+          averageEarlyCheckoutMinutes: 0,
+          staff: []
+        },
+        roleInsights: [],
+        geoPolicyCompliance: {
+          geoFenceEnabled: false,
+          geoFenceConfigured: false,
+          officeRadiusMeters: null,
+          attendanceEditPolicy: "any",
+          analyticsIncludeFutureDays: false,
+          expectedCheckIns: 0,
+          actualCheckIns: 0,
+          missingCheckIns: 0,
+          policyBreachEvents: 0,
+          complianceRate: 0
+        }
       };
     }
     const workingDays = organization.workingDays ?? [1, 2, 3, 4, 5];
@@ -129,35 +174,146 @@ export class AnalyticsService {
       });
     });
 
+    const dailyTrendMap = new Map<
+      string,
+      {
+        dateISO: string;
+        onTime: number;
+        late: number;
+        earlyCheckout: number;
+        absent: number;
+        avgLateMinutes: number;
+        avgEarlyCheckoutMinutes: number;
+      }
+    >();
+    dateRange.forEach((dateISO) => {
+      dailyTrendMap.set(dateISO, {
+        dateISO,
+        onTime: 0,
+        late: 0,
+        earlyCheckout: 0,
+        absent: 0,
+        avgLateMinutes: 0,
+        avgEarlyCheckoutMinutes: 0
+      });
+    });
+
     const rows = organization.staff.map((staff) => {
       let lateCount = 0;
       let earlyCount = 0;
       let absentCount = 0;
+      let presentCount = 0;
+      let onTimeCount = 0;
+      let lateMinutesTotal = 0;
+      let earlyMinutesTotal = 0;
+      let lateDaysCount = 0;
+      let earlyDaysCount = 0;
+      let currentAttendanceStreak = 0;
+      let maxAttendanceStreak = 0;
+      let currentAbsenceStreak = 0;
+      let maxAbsenceStreak = 0;
+
       dateRange.forEach((dateISO) => {
         const record = recordMap.get(`${staff.id}-${dateISO}`);
+        const trend = dailyTrendMap.get(dateISO);
         if (!record?.signInAt) {
           absentCount += 1;
+          currentAbsenceStreak += 1;
+          currentAttendanceStreak = 0;
+          if (currentAbsenceStreak > maxAbsenceStreak) {
+            maxAbsenceStreak = currentAbsenceStreak;
+          }
+          if (trend) {
+            trend.absent += 1;
+          }
           return;
         }
-        if (isLateCheckIn(record.signInAt, organization.lateAfterTime, dateISO)) {
-          lateCount += 1;
+
+        presentCount += 1;
+        currentAttendanceStreak += 1;
+        currentAbsenceStreak = 0;
+        if (currentAttendanceStreak > maxAttendanceStreak) {
+          maxAttendanceStreak = currentAttendanceStreak;
         }
-        if (
+
+        const wasLate = isLateCheckIn(
+          record.signInAt,
+          organization.lateAfterTime,
+          dateISO
+        );
+        const lateMinutes = getMinutesLate(
+          record.signInAt,
+          organization.lateAfterTime,
+          dateISO
+        );
+        if (wasLate) {
+          lateCount += 1;
+          lateDaysCount += 1;
+          lateMinutesTotal += lateMinutes;
+          if (trend) {
+            trend.late += 1;
+            trend.avgLateMinutes += lateMinutes;
+          }
+        } else {
+          onTimeCount += 1;
+          if (trend) {
+            trend.onTime += 1;
+          }
+        }
+
+        const leftEarly =
           record.signOutAt &&
           isEarlyCheckout(
             record.signOutAt,
             organization.earlyCheckoutBeforeTime,
             dateISO
-          )
+          );
+        if (
+          record.signOutAt &&
+          leftEarly
         ) {
+          const earlyMinutes = getMinutesEarly(
+            record.signOutAt,
+            organization.earlyCheckoutBeforeTime,
+            dateISO
+          );
           earlyCount += 1;
+          earlyDaysCount += 1;
+          earlyMinutesTotal += earlyMinutes;
+          if (trend) {
+            trend.earlyCheckout += 1;
+            trend.avgEarlyCheckoutMinutes += earlyMinutes;
+          }
         }
       });
+
+      const orderedDates = [...dateRange];
+      for (let index = orderedDates.length - 1; index >= 0; index -= 1) {
+        const record = recordMap.get(`${staff.id}-${orderedDates[index]}`);
+        if (record?.signInAt) {
+          break;
+        }
+        currentAttendanceStreak = 0;
+      }
+
       return {
         staff,
         lateCount,
         earlyCount,
-        absentCount
+        absentCount,
+        expectedDays: dateRange.length,
+        presentCount,
+        onTimeCount,
+        attendanceRate: toPercent(presentCount, dateRange.length),
+        punctualityRate: toPercent(onTimeCount, presentCount),
+        avgLateMinutes: lateDaysCount ? Math.round(lateMinutesTotal / lateDaysCount) : 0,
+        avgEarlyCheckoutMinutes: earlyDaysCount
+          ? Math.round(earlyMinutesTotal / earlyDaysCount)
+          : 0,
+        currentAttendanceStreak,
+        maxAttendanceStreak,
+        maxAbsenceStreak,
+        policyBreaches: lateCount + earlyCount + absentCount
       };
     });
 
@@ -178,11 +334,142 @@ export class AnalyticsService {
       { late: 0, early: 0, absent: 0 }
     );
 
+    const punctualityTrends = dateRange.map((dateISO) => {
+      const trend = dailyTrendMap.get(dateISO);
+      const staffCount = organization.staff.length;
+      const late = trend?.late ?? 0;
+      const onTime = trend?.onTime ?? 0;
+      const absent = trend?.absent ?? 0;
+      const earlyCheckout = trend?.earlyCheckout ?? 0;
+      const avgLateMinutes = late
+        ? Math.round((trend?.avgLateMinutes ?? 0) / late)
+        : 0;
+      const avgEarlyCheckoutMinutes = earlyCheckout
+        ? Math.round((trend?.avgEarlyCheckoutMinutes ?? 0) / earlyCheckout)
+        : 0;
+      return {
+        dateISO,
+        onTime,
+        late,
+        earlyCheckout,
+        absent,
+        attendanceRate: toPercent(staffCount - absent, staffCount),
+        punctualityRate: toPercent(onTime, onTime + late),
+        avgLateMinutes,
+        avgEarlyCheckoutMinutes
+      };
+    });
+
+    const reliability = {
+      expectedDays: dateRange.length,
+      averageAttendanceRate: rows.length
+        ? Math.round(rows.reduce((sum, row) => sum + row.attendanceRate, 0) / rows.length)
+        : 0,
+      averagePunctualityRate: rows.length
+        ? Math.round(rows.reduce((sum, row) => sum + row.punctualityRate, 0) / rows.length)
+        : 0,
+      averageLateMinutes: rows.length
+        ? Math.round(rows.reduce((sum, row) => sum + row.avgLateMinutes, 0) / rows.length)
+        : 0,
+      averageEarlyCheckoutMinutes: rows.length
+        ? Math.round(
+            rows.reduce((sum, row) => sum + row.avgEarlyCheckoutMinutes, 0) / rows.length
+          )
+        : 0,
+      staff: rows
+        .map((row) => ({
+          staff: row.staff,
+          expectedDays: row.expectedDays,
+          presentDays: row.presentCount,
+          attendanceRate: row.attendanceRate,
+          punctualityRate: row.punctualityRate,
+          maxAttendanceStreak: row.maxAttendanceStreak,
+          maxAbsenceStreak: row.maxAbsenceStreak,
+          avgLateMinutes: row.avgLateMinutes,
+          avgEarlyCheckoutMinutes: row.avgEarlyCheckoutMinutes,
+          policyBreaches: row.policyBreaches
+        }))
+        .sort((a, b) => b.policyBreaches - a.policyBreaches)
+    };
+
+    const roleInsights = Array.from(
+      rows.reduce(
+        (acc, row) => {
+          const roleKey = row.staff.role || "Unassigned";
+          const existing = acc.get(roleKey) ?? {
+            role: roleKey,
+            staffCount: 0,
+            lateCount: 0,
+            earlyCount: 0,
+            absentCount: 0,
+            expectedDays: 0,
+            presentDays: 0,
+            onTimeDays: 0
+          };
+          existing.staffCount += 1;
+          existing.lateCount += row.lateCount;
+          existing.earlyCount += row.earlyCount;
+          existing.absentCount += row.absentCount;
+          existing.expectedDays += row.expectedDays;
+          existing.presentDays += row.presentCount;
+          existing.onTimeDays += row.onTimeCount;
+          acc.set(roleKey, existing);
+          return acc;
+        },
+        new Map<
+          string,
+          {
+            role: string;
+            staffCount: number;
+            lateCount: number;
+            earlyCount: number;
+            absentCount: number;
+            expectedDays: number;
+            presentDays: number;
+            onTimeDays: number;
+          }
+        >()
+      ).values()
+    )
+      .map((role) => ({
+        ...role,
+        attendanceRate: toPercent(role.presentDays, role.expectedDays),
+        punctualityRate: toPercent(role.onTimeDays, role.presentDays),
+        policyBreaches: role.lateCount + role.earlyCount + role.absentCount
+      }))
+      .sort((a, b) => b.policyBreaches - a.policyBreaches);
+
+    const expectedCheckIns = organization.staff.length * dateRange.length;
+    const actualCheckIns = rows.reduce((sum, row) => sum + row.presentCount, 0);
+    const missingCheckIns = expectedCheckIns - actualCheckIns;
+    const policyBreachEvents = totals.late + totals.early + totals.absent;
+    const compliantCheckInEvents = Math.max(0, expectedCheckIns - policyBreachEvents);
+    const geoPolicyCompliance = {
+      geoFenceEnabled: organization.officeGeoFenceEnabled,
+      geoFenceConfigured:
+        organization.officeGeoFenceEnabled &&
+        organization.officeLatitude !== null &&
+        organization.officeLongitude !== null &&
+        (organization.officeRadiusMeters ?? 0) > 0,
+      officeRadiusMeters: organization.officeRadiusMeters ?? null,
+      attendanceEditPolicy: organization.attendanceEditPolicy,
+      analyticsIncludeFutureDays: organization.analyticsIncludeFutureDays,
+      expectedCheckIns,
+      actualCheckIns,
+      missingCheckIns,
+      policyBreachEvents,
+      complianceRate: toPercent(compliantCheckInEvents, expectedCheckIns)
+    };
+
     return {
       rangeStart: dateRange[0] ?? null,
       rangeEnd: dateRange[dateRange.length - 1] ?? null,
       rows: filteredRows,
-      totals
+      totals,
+      punctualityTrends,
+      reliability,
+      roleInsights,
+      geoPolicyCompliance
     };
   }
 }
