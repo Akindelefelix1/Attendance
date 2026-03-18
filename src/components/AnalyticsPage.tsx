@@ -46,6 +46,7 @@ const downloadCsv = (filename: string, content: string) => {
 };
 
 const AnalyticsPage = ({ organization }: Props) => {
+  const MONTHLY_TRENDS_PAGE_SIZE = 7;
   const [range, setRange] = useState<RangeKey>("week");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [rows, setRows] = useState<
@@ -67,6 +68,11 @@ const AnalyticsPage = ({ organization }: Props) => {
   const [rangeStart, setRangeStart] = useState<string | null>(null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [visibleTrendCount, setVisibleTrendCount] = useState(MONTHLY_TRENDS_PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleTrendCount(MONTHLY_TRENDS_PAGE_SIZE);
+  }, [range, organization?.id]);
 
   useEffect(() => {
     if (!organization) return;
@@ -146,6 +152,16 @@ const AnalyticsPage = ({ organization }: Props) => {
     rangeStart && rangeEnd
       ? `Highlights for ${formatDateLong(rangeStart)} to ${formatDateLong(rangeEnd)}.`
       : "No working days available for the selected range.";
+
+  const shownPunctualityTrends =
+    range === "month"
+      ? punctualityTrends.slice(0, visibleTrendCount)
+      : punctualityTrends;
+
+  const canViewMoreMonthlyTrends =
+    range === "month" && visibleTrendCount < punctualityTrends.length;
+  const canViewLessMonthlyTrends =
+    range === "month" && visibleTrendCount > MONTHLY_TRENDS_PAGE_SIZE;
 
   if (!organization) {
     return (
@@ -301,7 +317,7 @@ const AnalyticsPage = ({ organization }: Props) => {
               <p className="muted">No punctuality trend data available for this range.</p>
             </div>
           ) : (
-            punctualityTrends.map((trend) => (
+            shownPunctualityTrends.map((trend) => (
               <article key={trend.dateISO} className="trend-card">
                 <strong>{formatDateLong(trend.dateISO)}</strong>
                 <div className="trend-card-grid">
@@ -325,6 +341,30 @@ const AnalyticsPage = ({ organization }: Props) => {
             ))
           )}
         </div>
+        {canViewMoreMonthlyTrends || canViewLessMonthlyTrends ? (
+          <div className="trend-actions">
+            {canViewLessMonthlyTrends ? (
+              <button
+                className="btn ghost"
+                type="button"
+                onClick={() => setVisibleTrendCount(MONTHLY_TRENDS_PAGE_SIZE)}
+              >
+                View less
+              </button>
+            ) : null}
+            {canViewMoreMonthlyTrends ? (
+              <button
+                className="btn ghost"
+                type="button"
+                onClick={() =>
+                  setVisibleTrendCount((current) => current + MONTHLY_TRENDS_PAGE_SIZE)
+                }
+              >
+                View more
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <div className="analytics-section">

@@ -1303,6 +1303,11 @@ input {
   margin: 0;
 }
 
+.trend-actions {
+  display: flex;
+  justify-content: center;
+}
+
 .compact-table .analytics-row,
 .compact-table .analytics-head {
   grid-template-columns: 2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.9fr;
