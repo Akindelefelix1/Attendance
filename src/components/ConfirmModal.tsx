@@ -1,6 +1,4 @@
-﻿import React from "react";
-
-type Props = {
+﻿type Props = {
   isOpen: boolean;
   title: string;
   description: string;
