@@ -8,6 +8,10 @@ type ApiOrganization = {
   location: string;
   lateAfterTime: string;
   earlyCheckoutBeforeTime: string;
+  officeGeoFenceEnabled?: boolean;
+  officeLatitude?: number | null;
+  officeLongitude?: number | null;
+  officeRadiusMeters?: number | null;
   roles: string[];
   workingDays: number[];
   analyticsIncludeFutureDays: boolean;
@@ -31,6 +35,10 @@ const mapOrganization = (org: ApiOrganization): Organization => ({
   settings: {
     lateAfterTime: org.lateAfterTime,
     earlyCheckoutBeforeTime: org.earlyCheckoutBeforeTime,
+    officeGeoFenceEnabled: org.officeGeoFenceEnabled ?? false,
+    officeLatitude: org.officeLatitude ?? null,
+    officeLongitude: org.officeLongitude ?? null,
+    officeRadiusMeters: org.officeRadiusMeters ?? 150,
     roles: org.roles ?? [],
     workingDays: org.workingDays ?? [1, 2, 3, 4, 5],
     analyticsIncludeFutureDays: org.analyticsIncludeFutureDays ?? false,
@@ -76,6 +84,10 @@ export const createOrganization = async (payload: {
     location: payload.location,
     lateAfterTime: payload.settings?.lateAfterTime,
     earlyCheckoutBeforeTime: payload.settings?.earlyCheckoutBeforeTime,
+    officeGeoFenceEnabled: payload.settings?.officeGeoFenceEnabled,
+    officeLatitude: payload.settings?.officeLatitude,
+    officeLongitude: payload.settings?.officeLongitude,
+    officeRadiusMeters: payload.settings?.officeRadiusMeters,
     roles: payload.settings?.roles,
     workingDays: payload.settings?.workingDays,
     analyticsIncludeFutureDays: payload.settings?.analyticsIncludeFutureDays,
@@ -115,6 +127,10 @@ export const updateSettings = async (
     body: JSON.stringify({
       lateAfterTime: settings.lateAfterTime,
       earlyCheckoutBeforeTime: settings.earlyCheckoutBeforeTime,
+      officeGeoFenceEnabled: settings.officeGeoFenceEnabled,
+      officeLatitude: settings.officeLatitude,
+      officeLongitude: settings.officeLongitude,
+      officeRadiusMeters: settings.officeRadiusMeters,
       roles: settings.roles,
       workingDays: settings.workingDays,
       analyticsIncludeFutureDays: settings.analyticsIncludeFutureDays,
@@ -165,6 +181,8 @@ export const signInStaff = (payload: {
   organizationId: string;
   staffId: string;
   dateISO: string;
+  latitude?: number;
+  longitude?: number;
 }) =>
   request<AttendanceRecord | null>("/attendance/sign-in", {
     method: "POST",
@@ -175,6 +193,8 @@ export const signOutStaff = (payload: {
   organizationId: string;
   staffId: string;
   dateISO: string;
+  latitude?: number;
+  longitude?: number;
 }) =>
   request<AttendanceRecord | null>("/attendance/sign-out", {
     method: "POST",

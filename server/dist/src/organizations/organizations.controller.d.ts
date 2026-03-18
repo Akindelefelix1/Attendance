@@ -13,23 +13,22 @@ export declare class OrganizationsController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -40,6 +39,11 @@ export declare class OrganizationsController {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     })[]>;
     findOne(id: string, req: {
         user?: {
@@ -51,23 +55,22 @@ export declare class OrganizationsController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -78,12 +81,21 @@ export declare class OrganizationsController {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }) | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     create(body: {
         name: string;
         location: string;
         lateAfterTime?: string;
         earlyCheckoutBeforeTime?: string;
+        officeGeoFenceEnabled?: boolean;
+        officeLatitude?: number | null;
+        officeLongitude?: number | null;
+        officeRadiusMeters?: number;
         roles?: string[];
         workingDays?: number[];
         analyticsIncludeFutureDays?: boolean;
@@ -94,7 +106,6 @@ export declare class OrganizationsController {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -105,6 +116,11 @@ export declare class OrganizationsController {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: string, req: {
         user?: {
@@ -116,6 +132,10 @@ export declare class OrganizationsController {
         location: string;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number;
         roles: string[];
         workingDays: number[];
         analyticsIncludeFutureDays: boolean;
@@ -126,7 +146,6 @@ export declare class OrganizationsController {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -137,6 +156,11 @@ export declare class OrganizationsController {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     remove(id: string, req: {
         user?: {
@@ -147,7 +171,6 @@ export declare class OrganizationsController {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -158,5 +181,10 @@ export declare class OrganizationsController {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

@@ -13,6 +13,10 @@ export class SettingsService {
         id: true,
         lateAfterTime: true,
         earlyCheckoutBeforeTime: true,
+        officeGeoFenceEnabled: true,
+        officeLatitude: true,
+        officeLongitude: true,
+        officeRadiusMeters: true,
         roles: true,
         workingDays: true,
         analyticsIncludeFutureDays: true,
@@ -28,6 +32,10 @@ export class SettingsService {
     data: Partial<{
       lateAfterTime: string;
       earlyCheckoutBeforeTime: string;
+      officeGeoFenceEnabled: boolean;
+      officeLatitude: number | null;
+      officeLongitude: number | null;
+      officeRadiusMeters: number;
       roles: string[];
       workingDays: number[];
       analyticsIncludeFutureDays: boolean;
@@ -41,6 +49,10 @@ export class SettingsService {
     const updateData: {
       lateAfterTime?: string;
       earlyCheckoutBeforeTime?: string;
+      officeGeoFenceEnabled?: boolean;
+      officeLatitude?: number | null;
+      officeLongitude?: number | null;
+      officeRadiusMeters?: number;
       roles?: string[];
       workingDays?: number[];
       analyticsIncludeFutureDays?: boolean;

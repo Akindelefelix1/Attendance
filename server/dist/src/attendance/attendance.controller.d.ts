@@ -13,10 +13,10 @@ export declare class AttendanceController {
         createdAt: Date;
         updatedAt: Date;
         organizationId: string;
+        staffId: string;
         dateISO: string;
         signInAt: Date | null;
         signOutAt: Date | null;
-        staffId: string;
     }[]>;
     listForOrganization(orgId: string, req: {
         user?: {
@@ -28,15 +28,17 @@ export declare class AttendanceController {
         createdAt: Date;
         updatedAt: Date;
         organizationId: string;
+        staffId: string;
         dateISO: string;
         signInAt: Date | null;
         signOutAt: Date | null;
-        staffId: string;
     }[]>;
     signIn(body: {
         organizationId: string;
         staffId: string;
         dateISO: string;
+        latitude?: number;
+        longitude?: number;
     }, req: {
         user?: {
             role?: string;
@@ -47,15 +49,17 @@ export declare class AttendanceController {
         createdAt: Date;
         updatedAt: Date;
         organizationId: string;
+        staffId: string;
         dateISO: string;
         signInAt: Date | null;
         signOutAt: Date | null;
-        staffId: string;
     } | null> | null;
     signOut(body: {
         organizationId: string;
         staffId: string;
         dateISO: string;
+        latitude?: number;
+        longitude?: number;
     }, req: {
         user?: {
             role?: string;
@@ -66,9 +70,9 @@ export declare class AttendanceController {
         createdAt: Date;
         updatedAt: Date;
         organizationId: string;
+        staffId: string;
         dateISO: string;
         signInAt: Date | null;
         signOutAt: Date | null;
-        staffId: string;
     } | null> | null;
 }

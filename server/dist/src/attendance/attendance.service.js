@@ -17,6 +17,53 @@ let AttendanceService = class AttendanceService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    toRadians(value) {
+        return (value * Math.PI) / 180;
+    }
+    distanceMeters(latitudeA, longitudeA, latitudeB, longitudeB) {
+        const earthRadius = 6371000;
+        const dLat = this.toRadians(latitudeB - latitudeA);
+        const dLon = this.toRadians(longitudeB - longitudeA);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(this.toRadians(latitudeA)) *
+                Math.cos(this.toRadians(latitudeB)) *
+                Math.sin(dLon / 2) *
+                Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadius * c;
+    }
+    async assertWithinOfficeGeofence(organizationId, role, latitude, longitude) {
+        if (role !== "staff") {
+            return;
+        }
+        const organization = await this.prisma.organization.findUnique({
+            where: { id: organizationId },
+            select: {
+                officeGeoFenceEnabled: true,
+                officeLatitude: true,
+                officeLongitude: true,
+                officeRadiusMeters: true
+            }
+        });
+        if (!organization?.officeGeoFenceEnabled) {
+            return;
+        }
+        const officeLatitude = organization.officeLatitude;
+        const officeLongitude = organization.officeLongitude;
+        const officeRadiusMeters = organization.officeRadiusMeters ?? 150;
+        if (officeLatitude == null ||
+            officeLongitude == null ||
+            officeRadiusMeters <= 0) {
+            throw new common_1.ForbiddenException("Office geofence is not configured");
+        }
+        if (typeof latitude !== "number" || typeof longitude !== "number") {
+            throw new common_1.ForbiddenException("Location is required for attendance");
+        }
+        const distance = this.distanceMeters(latitude, longitude, officeLatitude, officeLongitude);
+        if (distance > officeRadiusMeters) {
+            throw new common_1.ForbiddenException("You must be within office location to sign in/out");
+        }
+    }
     async ensureStaffInOrganization(staffId, organizationId) {
         const staff = await this.prisma.staffMember.findUnique({
             where: { id: staffId },
@@ -39,11 +86,12 @@ let AttendanceService = class AttendanceService {
             orderBy: { dateISO: "asc" }
         });
     }
-    async signIn(organizationId, staffId, dateISO) {
+    async signIn(organizationId, staffId, dateISO, role, latitude, longitude) {
         const isValidStaff = await this.ensureStaffInOrganization(staffId, organizationId);
         if (!isValidStaff) {
             return null;
         }
+        await this.assertWithinOfficeGeofence(organizationId, role, latitude, longitude);
         const existing = await this.prisma.attendanceRecord.findUnique({
             where: { staffId_dateISO: { staffId, dateISO } }
         });
@@ -60,11 +108,12 @@ let AttendanceService = class AttendanceService {
             }
         });
     }
-    async signOut(organizationId, staffId, dateISO) {
+    async signOut(organizationId, staffId, dateISO, role, latitude, longitude) {
         const isValidStaff = await this.ensureStaffInOrganization(staffId, organizationId);
         if (!isValidStaff) {
             return null;
         }
+        await this.assertWithinOfficeGeofence(organizationId, role, latitude, longitude);
         const existing = await this.prisma.attendanceRecord.findUnique({
             where: { staffId_dateISO: { staffId, dateISO } }
         });

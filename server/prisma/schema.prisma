@@ -40,6 +40,10 @@ model Organization {
   name                       String
   location                   String
   staffLoginPasswordHash     String?
+  officeGeoFenceEnabled      Boolean               @default(false)
+  officeLatitude             Float?
+  officeLongitude            Float?
+  officeRadiusMeters         Int?                  @default(150)
   lateAfterTime              String                @default("09:00")
   earlyCheckoutBeforeTime    String                @default("17:00")
   roles                      String[]

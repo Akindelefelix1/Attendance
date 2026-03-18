@@ -262,10 +262,13 @@ const App = () => {
 
   const performSignIn = async (staffId: string) => {
     if (!selectedOrg) return;
+    const position = await getCurrentPositionForAttendance();
     await signInStaff({
       organizationId: selectedOrg.id,
       staffId,
-      dateISO: selectedDateISO
+      dateISO: selectedDateISO,
+      latitude: position?.latitude,
+      longitude: position?.longitude
     });
     const records = await listAttendanceForDate(selectedOrg.id, selectedDateISO);
     setAttendanceForDate(records);
@@ -273,13 +276,44 @@ const App = () => {
 
   const performSignOut = async (staffId: string) => {
     if (!selectedOrg) return;
+    const position = await getCurrentPositionForAttendance();
     await signOutStaff({
       organizationId: selectedOrg.id,
       staffId,
-      dateISO: selectedDateISO
+      dateISO: selectedDateISO,
+      latitude: position?.latitude,
+      longitude: position?.longitude
     });
     const records = await listAttendanceForDate(selectedOrg.id, selectedDateISO);
     setAttendanceForDate(records);
+  };
+
+  const getCurrentPositionForAttendance = async (): Promise<
+    { latitude: number; longitude: number } | null
+  > => {
+    if (!isStaffSession) {
+      return null;
+    }
+    if (!("geolocation" in navigator)) {
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        () => resolve(null),
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    });
   };
 
   const requestAction = (staffId: string, type: "sign-in" | "sign-out") => {

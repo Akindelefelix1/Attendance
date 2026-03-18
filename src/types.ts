@@ -10,6 +10,10 @@ export type StaffMember = {
 export type OrgSettings = {
   lateAfterTime: string;
   earlyCheckoutBeforeTime: string;
+  officeGeoFenceEnabled: boolean;
+  officeLatitude: number | null;
+  officeLongitude: number | null;
+  officeRadiusMeters: number;
   roles: string[];
   workingDays: number[];
   analyticsIncludeFutureDays: boolean;

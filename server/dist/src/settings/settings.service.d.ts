@@ -12,10 +12,18 @@ export declare class SettingsService {
         attendanceEditPolicy: import("@prisma/client").$Enums.AttendanceEditPolicy;
         adminEmails: string[];
         planTier: import("@prisma/client").$Enums.PlanTier;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     } | null>;
     updateSettings(organizationId: string, data: Partial<{
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number;
         roles: string[];
         workingDays: number[];
         analyticsIncludeFutureDays: boolean;
@@ -27,7 +35,6 @@ export declare class SettingsService {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -38,5 +45,10 @@ export declare class SettingsService {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }>;
 }

@@ -8,23 +8,22 @@ export declare class OrganizationsService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -35,29 +34,33 @@ export declare class OrganizationsService {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     })[]>;
     findAllForOrg(orgId: string): Prisma.PrismaPromise<({
         staff: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -68,29 +71,33 @@ export declare class OrganizationsService {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     })[]>;
     findOne(id: string): Prisma.Prisma__OrganizationClient<({
         staff: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
-            passwordHash: string | null;
-            appRole: import("@prisma/client").$Enums.AppRole;
-            permissions: import("@prisma/client").$Enums.Permission[];
             organizationId: string;
             fullName: string;
             role: string;
+            email: string;
+            passwordHash: string | null;
             isVerified: boolean;
             verifyToken: string | null;
             resetToken: string | null;
             resetTokenExp: Date | null;
+            appRole: import("@prisma/client").$Enums.AppRole;
+            permissions: import("@prisma/client").$Enums.Permission[];
         }[];
     } & {
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -101,12 +108,16 @@ export declare class OrganizationsService {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }) | null, null, import("@prisma/client/runtime/client").DefaultArgs, Prisma.PrismaClientOptions>;
     create(data: Prisma.OrganizationCreateInput): Prisma.Prisma__OrganizationClient<{
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -117,12 +128,16 @@ export declare class OrganizationsService {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, Prisma.PrismaClientOptions>;
     update(id: string, data: Prisma.OrganizationUpdateInput): Prisma.Prisma__OrganizationClient<{
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -133,12 +148,16 @@ export declare class OrganizationsService {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, Prisma.PrismaClientOptions>;
     remove(id: string): Prisma.Prisma__OrganizationClient<{
         id: string;
         name: string;
         location: string;
-        staffLoginPasswordHash: string | null;
         lateAfterTime: string;
         earlyCheckoutBeforeTime: string;
         roles: string[];
@@ -149,5 +168,10 @@ export declare class OrganizationsService {
         planTier: import("@prisma/client").$Enums.PlanTier;
         createdAt: Date;
         updatedAt: Date;
+        staffLoginPasswordHash: string | null;
+        officeGeoFenceEnabled: boolean;
+        officeLatitude: number | null;
+        officeLongitude: number | null;
+        officeRadiusMeters: number | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, Prisma.PrismaClientOptions>;
 }

@@ -47,14 +47,14 @@ let AttendanceController = class AttendanceController {
             return null;
         }
         this.assertOrgScope(body.organizationId, req.user);
-        return this.attendanceService.signIn(body.organizationId, body.staffId, body.dateISO);
+        return this.attendanceService.signIn(body.organizationId, body.staffId, body.dateISO, req.user?.role, body.latitude, body.longitude);
     }
     signOut(body, req) {
         if (req.user?.role === "staff" && req.user.id !== body.staffId) {
             return null;
         }
         this.assertOrgScope(body.organizationId, req.user);
-        return this.attendanceService.signOut(body.organizationId, body.staffId, body.dateISO);
+        return this.attendanceService.signOut(body.organizationId, body.staffId, body.dateISO, req.user?.role, body.latitude, body.longitude);
     }
 };
 exports.AttendanceController = AttendanceController;

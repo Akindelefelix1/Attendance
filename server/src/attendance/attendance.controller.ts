@@ -65,6 +65,8 @@ export class AttendanceController {
       organizationId: string;
       staffId: string;
       dateISO: string;
+      latitude?: number;
+      longitude?: number;
     },
     @Req() req: { user?: { role?: string; id?: string } }
   ) {
@@ -72,7 +74,14 @@ export class AttendanceController {
       return null;
     }
     this.assertOrgScope(body.organizationId, req.user);
-    return this.attendanceService.signIn(body.organizationId, body.staffId, body.dateISO);
+    return this.attendanceService.signIn(
+      body.organizationId,
+      body.staffId,
+      body.dateISO,
+      req.user?.role,
+      body.latitude,
+      body.longitude
+    );
   }
 
   @Post("sign-out")
@@ -84,6 +93,8 @@ export class AttendanceController {
       organizationId: string;
       staffId: string;
       dateISO: string;
+      latitude?: number;
+      longitude?: number;
     },
     @Req() req: { user?: { role?: string; id?: string } }
   ) {
@@ -91,6 +102,13 @@ export class AttendanceController {
       return null;
     }
     this.assertOrgScope(body.organizationId, req.user);
-    return this.attendanceService.signOut(body.organizationId, body.staffId, body.dateISO);
+    return this.attendanceService.signOut(
+      body.organizationId,
+      body.staffId,
+      body.dateISO,
+      req.user?.role,
+      body.latitude,
+      body.longitude
+    );
   }
 }

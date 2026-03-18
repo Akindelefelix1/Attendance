@@ -64,6 +64,10 @@ export class OrganizationsController {
       location: string;
       lateAfterTime?: string;
       earlyCheckoutBeforeTime?: string;
+      officeGeoFenceEnabled?: boolean;
+      officeLatitude?: number | null;
+      officeLongitude?: number | null;
+      officeRadiusMeters?: number;
       roles?: string[];
       workingDays?: number[];
       analyticsIncludeFutureDays?: boolean;
@@ -77,6 +81,10 @@ export class OrganizationsController {
       location: body.location,
       lateAfterTime: body.lateAfterTime ?? undefined,
       earlyCheckoutBeforeTime: body.earlyCheckoutBeforeTime ?? undefined,
+      officeGeoFenceEnabled: body.officeGeoFenceEnabled ?? false,
+      officeLatitude: body.officeLatitude ?? null,
+      officeLongitude: body.officeLongitude ?? null,
+      officeRadiusMeters: body.officeRadiusMeters ?? 150,
       roles: body.roles ?? [],
       workingDays: body.workingDays ?? [1, 2, 3, 4, 5],
       analyticsIncludeFutureDays: body.analyticsIncludeFutureDays ?? false,
@@ -98,6 +106,10 @@ export class OrganizationsController {
       location: string;
       lateAfterTime: string;
       earlyCheckoutBeforeTime: string;
+      officeGeoFenceEnabled: boolean;
+      officeLatitude: number | null;
+      officeLongitude: number | null;
+      officeRadiusMeters: number;
       roles: string[];
       workingDays: number[];
       analyticsIncludeFutureDays: boolean;

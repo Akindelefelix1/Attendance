@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import type { OrgSettings } from "../types";
 import { registerAdmin, setOrganizationStaffPassword } from "../lib/api";
 
@@ -27,6 +27,7 @@ const AdminSettings = ({
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [staffLoginPasswordInput, setStaffLoginPasswordInput] = useState("");
   const [staffLoginSaving, setStaffLoginSaving] = useState(false);
+
   const workingDays = settings.workingDays ?? [1, 2, 3, 4, 5];
   const adminLimit =
     settings.planTier === "pro" ? 10 : settings.planTier === "plus" ? 3 : 1;
@@ -97,6 +98,7 @@ const AdminSettings = ({
       return;
     }
     if (remainingAdmins <= 0) return;
+
     registerAdmin({ orgId, email: trimmed, password: adminPasswordInput })
       .then(() => {
         onUpdate({ ...settings, adminEmails: [...adminEmails, trimmed] });
@@ -129,7 +131,7 @@ const AdminSettings = ({
 
   return (
     <section className="admin-settings">
-      <div className="role-settings">
+      <div className="role-settings settings-block">
         <div className="panel-header">
           <h3>Plan tier</h3>
           <p className="muted">Controls admin limits and advanced capabilities.</p>
@@ -157,7 +159,7 @@ const AdminSettings = ({
         </label>
       </div>
 
-      <div className="role-settings">
+      <div className="role-settings settings-block">
         <div className="panel-header">
           <h3>Admins</h3>
           <p className="muted">
@@ -218,7 +220,7 @@ const AdminSettings = ({
         </div>
       </div>
 
-      <div className="role-settings">
+      <div className="role-settings settings-block">
         <div className="panel-header">
           <h3>Staff login password</h3>
           <p className="muted">
@@ -252,34 +254,112 @@ const AdminSettings = ({
         </label>
       </div>
 
-      <div className="panel-header">
-        <h3>Attendance rules</h3>
-        <p className="muted">Late and early checkout thresholds are set here.</p>
+      <div className="role-settings settings-block">
+        <div className="panel-header">
+          <h3>Attendance rules</h3>
+          <p className="muted">Late and early checkout thresholds are set here.</p>
+        </div>
+        <label>
+          Late if check-in after
+          <input
+            type="time"
+            value={settings.lateAfterTime}
+            onChange={(event) =>
+              onUpdate({ ...settings, lateAfterTime: event.target.value })
+            }
+            disabled={disabled || isBusy}
+          />
+        </label>
+        <label>
+          Early if check-out before
+          <input
+            type="time"
+            value={settings.earlyCheckoutBeforeTime}
+            onChange={(event) =>
+              onUpdate({ ...settings, earlyCheckoutBeforeTime: event.target.value })
+            }
+            disabled={disabled || isBusy}
+          />
+        </label>
       </div>
-      <label>
-        Late if check-in after
-        <input
-          type="time"
-          value={settings.lateAfterTime}
-          onChange={(event) =>
-            onUpdate({ ...settings, lateAfterTime: event.target.value })
-          }
-          disabled={disabled || isBusy}
-        />
-      </label>
-      <label>
-        Early if check-out before
-        <input
-          type="time"
-          value={settings.earlyCheckoutBeforeTime}
-          onChange={(event) =>
-            onUpdate({ ...settings, earlyCheckoutBeforeTime: event.target.value })
-          }
-          disabled={disabled || isBusy}
-        />
-      </label>
 
-      <div className="role-settings">
+      <div className="role-settings settings-block">
+        <div className="panel-header">
+          <h3>Office geofence</h3>
+          <p className="muted">
+            Require staff to be physically in office before sign in/out is allowed.
+          </p>
+        </div>
+        <label className="toggle-pill">
+          <input
+            type="checkbox"
+            checked={settings.officeGeoFenceEnabled}
+            onChange={(event) =>
+              onUpdate({
+                ...settings,
+                officeGeoFenceEnabled: event.target.checked
+              })
+            }
+            disabled={disabled || isBusy}
+          />
+          <span>Enforce office location for staff attendance actions</span>
+        </label>
+        <div className="role-input">
+          <label>
+            Office latitude
+            <input
+              type="number"
+              step="any"
+              value={settings.officeLatitude ?? ""}
+              onChange={(event) =>
+                onUpdate({
+                  ...settings,
+                  officeLatitude:
+                    event.target.value.trim() === ""
+                      ? null
+                      : Number(event.target.value)
+                })
+              }
+              disabled={disabled || isBusy}
+            />
+          </label>
+          <label>
+            Office longitude
+            <input
+              type="number"
+              step="any"
+              value={settings.officeLongitude ?? ""}
+              onChange={(event) =>
+                onUpdate({
+                  ...settings,
+                  officeLongitude:
+                    event.target.value.trim() === ""
+                      ? null
+                      : Number(event.target.value)
+                })
+              }
+              disabled={disabled || isBusy}
+            />
+          </label>
+          <label>
+            Allowed radius (meters)
+            <input
+              type="number"
+              min={1}
+              value={settings.officeRadiusMeters}
+              onChange={(event) =>
+                onUpdate({
+                  ...settings,
+                  officeRadiusMeters: Math.max(1, Number(event.target.value) || 150)
+                })
+              }
+              disabled={disabled || isBusy}
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="role-settings settings-block">
         <div className="panel-header">
           <h3>Sign-in permissions</h3>
           <p className="muted">
@@ -312,7 +392,7 @@ const AdminSettings = ({
         </label>
       </div>
 
-      <div className="role-settings">
+      <div className="role-settings settings-block">
         <div className="panel-header">
           <h3>Working days</h3>
           <p className="muted">Choose which days count toward attendance analytics.</p>
@@ -354,7 +434,7 @@ const AdminSettings = ({
         </label>
       </div>
 
-      <div className="role-settings">
+      <div className="role-settings settings-block">
         <div className="role-header">
           <div className="panel-header">
             <h3>Roles</h3>

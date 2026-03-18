@@ -1377,7 +1377,7 @@ input {
 
 .admin-settings {
   display: grid;
-  gap: 0.85rem;
+  gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
@@ -1385,6 +1385,19 @@ input {
   display: grid;
   gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+.admin-settings .settings-block {
+  margin-top: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fffdf9;
+  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.05);
+}
+
+.admin-settings .settings-block .panel-header {
+  margin-bottom: 0.25rem;
 }
 
 .role-header {
