@@ -314,7 +314,7 @@ const LandingPage = ({ page }: Props) => {
             <div className="landing-hero-panel">
               <div className="landing-hero-copy">
                 <p className="landing-eyebrow">Modern attendance infrastructure</p>
-                <h1>Attendance management, without the chaos</h1>
+                <h1>Attendance management, without the chaos.</h1>
                 <p className="landing-lede">
                   Track staff attendance across teams and locations with real-time
                   visibility, automated rules, and reliable reporting — all in one
