@@ -7,7 +7,40 @@ type Props = {
   page: "home" | "about" | "contact" | "faqs" | "plans" | "login" | "signup";
 };
 
-const LandingPage = ({ onEnter, page }: Props) => {
+type FaqEntry = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
+const faqEntries: FaqEntry[] = [
+  {
+    id: "multi-org",
+    question: "Can we manage attendance for multiple branches or organizations?",
+    answer:
+      "Yes. You can manage multiple organizations with separate staff lists, rules, and analytics from one platform."
+  },
+  {
+    id: "history",
+    question: "Will attendance records remain available over time?",
+    answer:
+      "Yes. Attendance history is saved, searchable, and exportable for reporting and audits whenever needed."
+  },
+  {
+    id: "rules",
+    question: "Can we customize late, early checkout, and policy rules?",
+    answer:
+      "Absolutely. Admins can configure check-in windows, late thresholds, early checkout rules, and attendance policies per organization."
+  },
+  {
+    id: "support",
+    question: "Do you provide onboarding and setup support?",
+    answer:
+      "Yes. Our team helps with onboarding, setup guidance, and best-practice rollout so your team can go live quickly."
+  }
+];
+
+const LandingPage = ({ page }: Props) => {
   const navigate = useNavigate();
   const [signupOrgName, setSignupOrgName] = useState("");
   const [signupLocation, setSignupLocation] = useState("");
@@ -22,6 +55,7 @@ const LandingPage = ({ onEnter, page }: Props) => {
     "https://res.cloudinary.com/doxxevnyt/image/upload/v1773662233/8b9bce25-da3f-4c63-a9c4-6c543a15e1f1_yteu7o.png"
   ];
   const [heroIndex, setHeroIndex] = useState(0);
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   const handleSignup = async () => {
     if (authBusy) return;
@@ -96,6 +130,12 @@ const LandingPage = ({ onEnter, page }: Props) => {
     }, 3000);
     return () => window.clearInterval(interval);
   }, [page, heroImages.length]);
+
+  useEffect(() => {
+    if (page !== "faqs") {
+      setOpenFaqId(null);
+    }
+  }, [page]);
 
   return (
     <div className="landing">
@@ -273,24 +313,25 @@ const LandingPage = ({ onEnter, page }: Props) => {
           <header className="landing-hero">
             <div className="landing-hero-panel">
               <div className="landing-hero-copy">
-                <p className="landing-eyebrow">Attendance made simple</p>
-                <h1>Run reliable staff attendance across every organization.</h1>
+                <p className="landing-eyebrow">Modern attendance infrastructure</p>
+                <h1>Attendance management, without the chaos</h1>
                 <p className="landing-lede">
-                  Morning sign-ins, evening sign-outs, late flags, and historical tracking
-                  built for teams that want clarity without complexity.
+                  Track staff attendance across teams and locations with real-time
+                  visibility, automated rules, and reliable reporting — all in one
+                  simple system.
                 </p>
                 <div className="landing-hero-badges">
-                  <span className="badge">Live dashboards</span>
-                  <span className="badge">Role-based access</span>
-                  <span className="badge">Late alerts</span>
+                  <span className="badge">✔ No setup complexity</span>
+                  <span className="badge">✔ Works for teams of all sizes</span>
+                  <span className="badge">✔ Real-time insights</span>
                 </div>
                 <div className="landing-cta">
-                  <button className="btn solid" type="button" onClick={onEnter}>
-                    Enter the app
-                  </button>
-                  <button className="btn ghost" type="button">
+                  <Link className="btn solid" to="/signup">
+                    Get Started Free
+                  </Link>
+                  <Link className="btn ghost" to="/contact">
                     Book a demo
-                  </button>
+                  </Link>
                 </div>
               </div>
               <div className="landing-hero-visual">
@@ -320,34 +361,53 @@ const LandingPage = ({ onEnter, page }: Props) => {
             </div>
             <div className="landing-hero-card">
               <div>
-                <p className="landing-card-label">Live visibility</p>
-                <h3>Know who is in, out, or late instantly.</h3>
+                <p className="landing-card-label">Clarity at a glance</p>
+                <h3>Present, absent, and late updates in real time.</h3>
               </div>
               <div className="landing-metric">
                 <span>
                   <span className="icon-dot" />
-                  Multi-organization
+                  Present now
                 </span>
-                <strong>Built-in</strong>
+                <strong>84</strong>
               </div>
               <div className="landing-metric">
                 <span>
                   <span className="icon-dot" />
-                  Daily attendance
+                  Absent today
                 </span>
-                <strong>Tracked</strong>
+                <strong>7</strong>
               </div>
               <div className="landing-metric">
                 <span>
                   <span className="icon-dot" />
-                  Historical reports
+                  Late check-ins
                 </span>
-                <strong>Ready</strong>
+                <strong>12</strong>
               </div>
+              <p className="muted">Live activity feed updates as staff sign in and out.</p>
             </div>
           </header>
 
           <section className="landing-section">
+            <div className="value-strip">
+              <strong>Trusted by growing teams and organizations</strong>
+              <div className="value-strip-items">
+                <span className="badge">HR teams</span>
+                <span className="badge">Schools</span>
+                <span className="badge">SMEs</span>
+                <span className="badge">Field teams</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="landing-section">
+            <div className="landing-section-header">
+              <h2>Everything you need to manage attendance efficiently</h2>
+              <p className="muted">
+                Built for visibility, automation, and control across organizations.
+              </p>
+            </div>
             <div className="landing-grid">
               <div className="landing-card">
                 <div className="landing-card-icon">
@@ -358,10 +418,10 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     />
                   </svg>
                 </div>
-                <h2>About us</h2>
+                <h3>Real-time Visibility</h3>
                 <p className="muted">
-                  We help organizations stay on top of attendance with tools that are
-                  lightweight, modern, and easy for teams to adopt.
+                  Instantly see who is present, absent, or late across your
+                  organization.
                 </p>
               </div>
               <div className="landing-card">
@@ -373,10 +433,9 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     />
                   </svg>
                 </div>
-                <h2>What we do</h2>
+                <h3>Smart Attendance Rules</h3>
                 <p className="muted">
-                  Manage attendance across multiple organizations, onboard staff, set
-                  late and early rules, and keep everyone aligned day to day.
+                  Automate late flags, shift rules, and working hours with ease.
                 </p>
               </div>
               <div className="landing-card">
@@ -388,36 +447,153 @@ const LandingPage = ({ onEnter, page }: Props) => {
                     />
                   </svg>
                 </div>
-                <h2>Contact us</h2>
+                <h3>Multi-Organization Support</h3>
                 <p className="muted">
-                  <a className="contact-link" href="mailto:hello@attendance.app">
-                    hello@attendance.app
-                  </a>
+                  Manage multiple teams or branches from a single dashboard.
                 </p>
+              </div>
+              <div className="landing-card">
+                <div className="landing-card-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 3l8 4v6c0 4.4-3 8.4-8 9-5-.6-8-4.6-8-9V7l8-4zm0 2.2L6 8v5c0 3.3 2.1 6.4 6 7 3.9-.6 6-3.7 6-7V8l-6-2.8z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </div>
+                <h3>Role-Based Access</h3>
                 <p className="muted">
-                  <a className="contact-link" href="tel:+2348107050824">
-                    +234 810 705 0824
-                  </a>
+                  Control what admins, managers, and staff can see and do.
                 </p>
-                <p className="muted">Lagos, Nigeria</p>
-                <button className="btn ghost" type="button">
-                  Contact support
-                </button>
+              </div>
+              <div className="landing-card">
+                <div className="landing-card-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M4 5h16v14H4V5zm2 2v10h12V7H6zm2 7h2v2H8v-2zm3-3h2v5h-2v-5zm3-4h2v9h-2V7z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </div>
+                <h3>Reports &amp; Insights</h3>
+                <p className="muted">
+                  Generate historical reports and export attendance data anytime.
+                </p>
+              </div>
+              <div className="landing-card">
+                <div className="landing-card-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 2a8 8 0 00-8 8v4H2v6h20v-6h-2v-4a8 8 0 00-8-8zm0 2a6 6 0 016 6v4H6v-4a6 6 0 016-6zm-3 12h6v2H9v-2z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </div>
+                <h3>Notifications &amp; Alerts</h3>
+                <p className="muted">
+                  Stay informed with real-time alerts on late check-ins and anomalies.
+                </p>
               </div>
             </div>
           </section>
 
           <section className="landing-section">
             <div className="landing-section-header">
-              <h2>Plans built for every organization</h2>
+              <h2>Simple setup. Powerful results.</h2>
+            </div>
+            <div className="steps-grid">
+              <article className="landing-card step-card">
+                <p className="landing-card-label">Step 1</p>
+                <h3>Create your organization</h3>
+                <p className="muted">Set up your team structure in minutes.</p>
+              </article>
+              <article className="landing-card step-card">
+                <p className="landing-card-label">Step 2</p>
+                <h3>Add staff &amp; define rules</h3>
+                <p className="muted">Assign roles, shifts, and attendance policies.</p>
+              </article>
+              <article className="landing-card step-card">
+                <p className="landing-card-label">Step 3</p>
+                <h3>Start tracking instantly</h3>
+                <p className="muted">
+                  Monitor attendance in real time with zero friction.
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <section className="landing-section">
+            <div className="landing-section-header">
+              <h2>Built for different kinds of teams</h2>
+            </div>
+            <div className="landing-grid">
+              <article className="landing-card">
+                <h3>Corporate teams</h3>
+                <p className="muted">Structured attendance workflows and clean reporting.</p>
+              </article>
+              <article className="landing-card">
+                <h3>Schools</h3>
+                <p className="muted">Reliable student and staff attendance tracking.</p>
+              </article>
+              <article className="landing-card">
+                <h3>Startups</h3>
+                <p className="muted">Lightweight setup that scales as your team grows.</p>
+              </article>
+              <article className="landing-card">
+                <h3>Field teams</h3>
+                <p className="muted">Visibility across distributed teams and remote locations.</p>
+              </article>
+            </div>
+          </section>
+
+          <section className="landing-section">
+            <div className="landing-section-header">
+              <h2>Clarity at a glance</h2>
               <p className="muted">
-                Upgrade when you need advanced controls, analytics, and integrations.
+                Monitor attendance trends, staff activity, and performance metrics from
+                one intuitive dashboard.
               </p>
+            </div>
+            <div className="preview-panel">
+              <div className="preview-grid">
+                <div className="landing-card">
+                  <h3>Status overview</h3>
+                  <p className="muted">Present / Absent / Late snapshots in real time.</p>
+                </div>
+                <div className="landing-card">
+                  <h3>Trends &amp; charts</h3>
+                  <p className="muted">Weekly and monthly punctuality patterns by role.</p>
+                </div>
+                <div className="landing-card">
+                  <h3>Live activity feed</h3>
+                  <p className="muted">Know exactly when staff check in or check out.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="landing-section">
+            <div className="landing-card">
+              <p className="landing-eyebrow">Built for simplicity. Designed for scale.</p>
+              <h2>A modern, lightweight attendance infrastructure for organizations.</h2>
+              <p className="muted">
+                We help organizations eliminate manual attendance tracking with a
+                modern system that is easy to adopt, reliable to use, and powerful
+                enough to grow with your team.
+              </p>
+            </div>
+          </section>
+
+          <section className="landing-section">
+            <div className="landing-section-header">
+              <h2>Flexible plans for every stage</h2>
+              <p className="muted">No hidden fees. Cancel anytime.</p>
             </div>
             <div className="plans">
               <div className="plan-card">
                 <h3>Starter</h3>
                 <p className="plan-price">Free</p>
+                <p className="muted">Free forever for small teams getting started.</p>
                 <ul>
                   <li>
                     <span className="plan-icon" aria-hidden="true" />
@@ -447,6 +623,7 @@ const LandingPage = ({ onEnter, page }: Props) => {
               <div className="plan-card highlight">
                 <h3>Plus</h3>
                 <p className="plan-price">NGN 45,000 / month</p>
+                <p className="muted">Best for growing teams that need insights and automation.</p>
                 <ul>
                   <li>
                     <span className="plan-icon" aria-hidden="true" />
@@ -480,6 +657,9 @@ const LandingPage = ({ onEnter, page }: Props) => {
               <div className="plan-card">
                 <h3>Pro</h3>
                 <p className="plan-price">NGN 120,000 / month</p>
+                <p className="muted">
+                  Advanced tools for large organizations and multi-location operations.
+                </p>
                 <ul>
                   <li>
                     <span className="plan-icon" aria-hidden="true" />
@@ -516,14 +696,43 @@ const LandingPage = ({ onEnter, page }: Props) => {
           <section className="landing-section">
             <div className="landing-footer">
               <div>
-                <h2>Ready to bring clarity to attendance?</h2>
+                <h2>Start tracking attendance the smarter way</h2>
                 <p className="muted">
-                  Start with the free plan, then scale with Plus or Pro when you are ready.
+                  Join organizations already simplifying their attendance processes.
                 </p>
               </div>
-              <button className="btn solid" type="button" onClick={onEnter}>
-                Enter the app
-              </button>
+              <div className="final-cta-actions">
+                <Link className="btn solid" to="/signup">
+                  Get Started Free
+                </Link>
+                <Link className="btn ghost" to="/contact">
+                  Talk to Sales
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="landing-section">
+            <div className="contact-grid">
+              <article className="contact-card">
+                <h3>Email</h3>
+                <a className="contact-link" href="mailto:hello@attendance.app">
+                  hello@attendance.app
+                </a>
+              </article>
+              <article className="contact-card">
+                <h3>Phone</h3>
+                <a className="contact-link" href="tel:+2348107050824">
+                  +234 810 705 0824
+                </a>
+              </article>
+              <article className="contact-card">
+                <h3>Location</h3>
+                <p className="muted">Lagos, Nigeria</p>
+              </article>
+            </div>
+            <div className="landing-contact-note">
+              <p className="muted">We typically respond within 24 hours.</p>
             </div>
           </section>
         </>
@@ -626,32 +835,30 @@ const LandingPage = ({ onEnter, page }: Props) => {
             </div>
           </div>
           <div className="faq-list">
-            <div className="faq-item">
-              <h3>Can we track multiple organizations?</h3>
-              <p className="muted">
-                Yes. The platform supports multiple organizations with separate staff
-                rosters and attendance rules.
-              </p>
-            </div>
-            <div className="faq-item">
-              <h3>Does attendance history stay saved?</h3>
-              <p className="muted">
-                Yes. You can view historical attendance and export reports in Plus
-                and Pro tiers.
-              </p>
-            </div>
-            <div className="faq-item">
-              <h3>Can we customize late check-in times?</h3>
-              <p className="muted">
-                Absolutely. Admins set late and early thresholds per organization.
-              </p>
-            </div>
-            <div className="faq-item">
-              <h3>Is there onboarding support?</h3>
-              <p className="muted">
-                Yes. Our team helps with onboarding and data setup for Plus and Pro.
-              </p>
-            </div>
+            {faqEntries.map((item) => {
+              const isOpen = openFaqId === item.id;
+              return (
+                <article key={item.id} className={`faq-item ${isOpen ? "open" : ""}`}>
+                  <button
+                    className="faq-question"
+                    type="button"
+                    onClick={() => setOpenFaqId((current) => (current === item.id ? null : item.id))}
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${item.id}`}
+                  >
+                    <span>{item.question}</span>
+                    <span className="faq-indicator" aria-hidden="true">
+                      {isOpen ? "−" : "+"}
+                    </span>
+                  </button>
+                  {isOpen ? (
+                    <p id={`faq-answer-${item.id}`} className="faq-answer muted">
+                      {item.answer}
+                    </p>
+                  ) : null}
+                </article>
+              );
+            })}
           </div>
         </section>
       ) : null}
