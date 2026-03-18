@@ -27,6 +27,8 @@ const AdminSettings = ({
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [staffLoginPasswordInput, setStaffLoginPasswordInput] = useState("");
   const [staffLoginSaving, setStaffLoginSaving] = useState(false);
+  const [locatingOffice, setLocatingOffice] = useState(false);
+  const [officeLocationError, setOfficeLocationError] = useState("");
 
   const workingDays = settings.workingDays ?? [1, 2, 3, 4, 5];
   const adminLimit =
@@ -125,6 +127,42 @@ const AdminSettings = ({
       .finally(() => {
         setStaffLoginSaving(false);
       });
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (locatingOffice || disabled || isBusy) return;
+    if (!("geolocation" in navigator)) {
+      setOfficeLocationError("Geolocation is not supported on this device.");
+      return;
+    }
+
+    setOfficeLocationError("");
+    setLocatingOffice(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        onUpdate({
+          ...settings,
+          officeLatitude: Number(position.coords.latitude.toFixed(6)),
+          officeLongitude: Number(position.coords.longitude.toFixed(6))
+        });
+        setLocatingOffice(false);
+      },
+      (error) => {
+        const message =
+          error.code === error.PERMISSION_DENIED
+            ? "Location permission denied. Please allow location access."
+            : error.code === error.POSITION_UNAVAILABLE
+              ? "Unable to determine current location."
+              : "Location request timed out. Please try again.";
+        setOfficeLocationError(message);
+        setLocatingOffice(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   };
 
   return (
@@ -354,6 +392,21 @@ const AdminSettings = ({
               disabled={disabled || isBusy}
             />
           </label>
+          <div className="office-location-actions">
+            <button
+              className="btn ghost"
+              type="button"
+              onClick={handleUseCurrentLocation}
+              disabled={disabled || isBusy || locatingOffice}
+            >
+              {locatingOffice ? "Getting location..." : "Use current location"}
+            </button>
+            {officeLocationError ? (
+              <p className="muted" role="status">
+                {officeLocationError}
+              </p>
+            ) : null}
+          </div>
         </div>
       </details>
 

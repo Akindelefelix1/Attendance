@@ -1462,6 +1462,12 @@ input {
   flex-wrap: wrap;
 }
 
+.office-location-actions {
+  display: grid;
+  gap: 0.35rem;
+  align-content: end;
+}
+
 .role-list {
   display: grid;
   gap: 0.5rem;
