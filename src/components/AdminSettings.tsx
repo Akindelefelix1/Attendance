@@ -121,9 +121,7 @@ const AdminSettings = ({
     if (!trimmed || staffLoginSaving) return;
     setStaffLoginSaving(true);
     setOrganizationStaffPassword({ orgId, password: trimmed })
-      .then(() => {
-        setStaffLoginPasswordInput("");
-      })
+      .then(() => undefined)
       .finally(() => {
         setStaffLoginSaving(false);
       });
@@ -231,7 +229,7 @@ const AdminSettings = ({
           Shared staff password
           <div className="role-input">
             <input
-              type="password"
+              type="text"
               value={staffLoginPasswordInput}
               onChange={(event) => setStaffLoginPasswordInput(event.target.value)}
               placeholder="Enter shared password"
